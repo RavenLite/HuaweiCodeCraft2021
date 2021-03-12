@@ -71,10 +71,10 @@ def read_file():
             server_type_arr = f.readline().strip().replace("(", "").replace(")", "").split(", ")
             server_type_dict = {
                 "server_name": server_type_arr[0],
-                "server_cpu_num": server_type_arr[1],
-                "server_memory_size": server_type_arr[2],
-                "server_hardware_cost": server_type_arr[3],
-                "server_energy_cost": server_type_arr[4]
+                "server_cpu_num": int(server_type_arr[1]),
+                "server_memory_size": int(server_type_arr[2]),
+                "server_hardware_cost": int(server_type_arr[3]),
+                "server_energy_cost": int(server_type_arr[4])
             }
             server_type_list.append(server_type_dict)
 
@@ -87,9 +87,9 @@ def read_file():
             vm_type_arr = f.readline().strip().replace("(", "").replace(")", "").split(", ")
             vm_type_dict = {
                 "vm_name": vm_type_arr[0],
-                "vm_cpu_num": vm_type_arr[1],
-                "vm_memory_size": vm_type_arr[2],
-                "vm_deployment_way": vm_type_arr[3],
+                "vm_cpu_num": int(vm_type_arr[1]),
+                "vm_memory_size": int(vm_type_arr[2]),
+                "vm_deployment_way": int(vm_type_arr[3]),
             }
             vm_type_list.append(vm_type_dict)
 
