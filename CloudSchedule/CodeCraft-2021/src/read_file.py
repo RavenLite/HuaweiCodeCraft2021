@@ -5,11 +5,11 @@ class TrainingData(object):
     def __init__(self, server_type_num, server_type_list, vm_type_num, vm_type_list, daily_num, daily_queue_list):
         # number
         self.server_type_num = int(server_type_num)
-        # list of tuple
+        # list of dict
         self.server_type_list = server_type_list
         # number
         self.vm_type_num = int(vm_type_num)
-        # list of tuple
+        # list of dict
         self.vm_type_list = vm_type_list
         # number
         self.daily_num = int(daily_num)
@@ -49,7 +49,7 @@ class DailyQueue(object):
     def __init__(self, queue_length, queue_info):
         # number
         self.daily_queue_length = queue_length
-        # list of tuple
+        # list of dict
         self.daily_queue_info = queue_info
 
     def get_daily_queue_length(self):
