@@ -134,7 +134,6 @@ class Algorithm(object):
 
         all_decision = step_1_decision + step_2_decision
         sorted_decision = sorted(all_decision, key=lambda x: x[0])
-        count = 0
         for decision in sorted_decision:
             print("{}".format(decision[1]))
 
