@@ -1,10 +1,12 @@
 import read_file
-
+import datetime
 
 class Algorithm(object):
 
     def __init__(self):
         training_data = read_file.get_training_data()
+
+        # 原始数据
         self.server_type_num = training_data.get_server_type_num()
         self.server_type_list = training_data.get_server_type_list()
         self.vm_type_num = training_data.get_vm_type_num()
@@ -22,11 +24,13 @@ class Algorithm(object):
         self.server_single_more_cpu = {}
         self.server_single_equal = {}
         self.server_single_more_memory = {}
+
         # 存储双节点虚拟机的服务器
         self.server_double_more_cpu = {}
         self.server_double_equal = {}
         self.server_double_more_memory = {}
 
+        # 存储请求队列的服务器
         self.add_request_single_more_cpu = []
         self.add_request_single_equal = []
         self.add_request_single_more_memory = []
@@ -37,11 +41,14 @@ class Algorithm(object):
 
         # 总支出
         self.cost = 0
+
         # 当前 server_id
         self.server_id = 0
+
         # 虚拟机ID：所在服务器ID键值对
         self.vm_id_to_server_id = {}
 
+        # 计算支出
         for day in range(self.daily_num):
             daily_queue = self.daily_queue_list[day]
             self.process_daily_queue(daily_queue, day)
@@ -54,23 +61,19 @@ class Algorithm(object):
             if request["request_item_action"] == "add":
                 for vm in self.vm_type_list:
                     if vm["vm_name"] == request["request_item_vm_type"]:
+                        # 根据 cpu 和 memory 特征，将请求分为六类
+                        request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                         if vm["vm_deployment_way"] == 0 and abs(vm["vm_cpu_num"] - vm["vm_memory_size"]) < 20:
-                            request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                             self.add_request_single_equal.append(request)
                         elif vm["vm_deployment_way"] == 0 and vm["vm_cpu_num"] > vm["vm_memory_size"]:
-                            request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                             self.add_request_single_more_cpu.append(request)
                         elif vm["vm_deployment_way"] == 0 and vm["vm_cpu_num"] < vm["vm_memory_size"]:
-                            request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                             self.add_request_single_more_memory.append(request)
                         elif vm["vm_deployment_way"] == 1 and abs(vm["vm_cpu_num"] - vm["vm_memory_size"]) < 20:
-                            request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                             self.add_request_double_equal.append(request)
                         elif vm["vm_deployment_way"] == 1 and vm["vm_cpu_num"] > vm["vm_memory_size"]:
-                            request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                             self.add_request_double_more_cpu.append(request)
                         elif vm["vm_deployment_way"] == 1 and vm["vm_cpu_num"] < vm["vm_memory_size"]:
-                            request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                             self.add_request_double_more_memory.append(request)
                     else:
                         continue
@@ -94,19 +97,12 @@ class Algorithm(object):
         step_1_decision = sc + se + sm + dc + de + dm
 
         # 处理请求的第二阶段，继续处理第一阶段处理完之后剩下的请求，这就需要购买新的服务器
-
-        self.add_request_single_more_cpu = sorted(self.add_request_single_more_cpu,
-                                                  key=lambda x: x["cpu_num"])
-        self.add_request_single_equal = sorted(self.add_request_single_equal,
-                                               key=lambda x: x["cpu_num"] + x["memory_size"])
-        self.add_request_single_more_memory = sorted(self.add_request_single_more_memory,
-                                                     key=lambda x: x["memory_size"])
-        self.add_request_double_more_cpu = sorted(self.add_request_double_more_cpu,
-                                                  key=lambda x: x["cpu_num"])
-        self.add_request_double_equal = sorted(self.add_request_double_equal,
-                                               key=lambda x: x["cpu_num"] + x["memory_size"])
-        self.add_request_double_more_memory = sorted(self.add_request_double_more_memory,
-                                                     key=lambda x: x["memory_size"])
+        self.add_request_single_more_cpu.sort(key=lambda x: x["cpu_num"])
+        self.add_request_single_equal.sort(key=lambda x: x["cpu_num"] + x["memory_size"])
+        self.add_request_single_more_memory.sort(key=lambda x: x["memory_size"])
+        self.add_request_double_more_cpu.sort(key=lambda x: x["cpu_num"])
+        self.add_request_double_equal.sort(key=lambda x: x["cpu_num"] + x["memory_size"])
+        self.add_request_double_more_memory.sort(key=lambda x: x["memory_size"])
 
         ps_sc, sc = self.single_more_cpu_purchase(day)
         ps_se, se = self.single_equal_purchase(day)
@@ -116,6 +112,13 @@ class Algorithm(object):
         ps_dm, dm = self.double_more_memory_purchase(day)
 
         purchase_server = ps_sc + ps_se + ps_sm + ps_dc + ps_de + ps_dm
+        ps = {}
+        for i in purchase_server:
+            if i[1] in ps:
+                ps[i[1]] += 1
+            else:
+                ps[i[1]] = 1
+
         step_2_decision = sc + se + sm + dc + de + dm
 
         # 处理请求的第三阶段，即删除操作
@@ -174,6 +177,8 @@ class Algorithm(object):
                              "B_rest_memory_size":
                                  server["server_memory_size"] / 2 - self.add_request_single_more_cpu[index + 1][
                                      "memory_size"]})
+
+                        # A 和 B 节点都作为可以利用的服务器节点加入 add_request_single_more_cpu
                         decision.append(
                             [self.add_request_single_more_cpu[index]["request_id"], (self.server_id, "A")])
                         decision.append(
@@ -531,6 +536,8 @@ class Algorithm(object):
         to_del = []
         for request in request_list:
             for server_id, server in server_dict.items():
+
+                # 这里只用判断 A 就可以。因为会优先使用 A 区，所以 A 区空间满足条件，则 B 区一定满足。
                 if request["cpu_num"] / 2 <= server["A_rest_cpu_num"] and \
                         request["memory_size"] / 2 <= server["A_rest_memory_size"]:
                     server["A_rest_cpu_num"] -= request["cpu_num"] / 2
@@ -647,11 +654,9 @@ class Algorithm(object):
             else:
                 self.server_type_list_more_memory.append(server)
 
-
 def algorithm_demo():
     algorithm_result = Algorithm()
     return algorithm_result.get_cost()
-
 
 if __name__ == "__main__":
     cost = algorithm_demo()
