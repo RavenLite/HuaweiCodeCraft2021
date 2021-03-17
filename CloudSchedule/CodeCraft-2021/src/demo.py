@@ -1,10 +1,12 @@
 import read_file
-import datetime
+# import read
+# import datetime
 
 class Algorithm(object):
 
     def __init__(self):
         training_data = read_file.get_training_data()
+        # training_data = read.get_training_data()
 
         # 原始数据
         self.server_type_num = training_data.get_server_type_num()
@@ -96,6 +98,9 @@ class Algorithm(object):
 
         step_1_decision = sc + se + sm + dc + de + dm
 
+        # self.day_purchase = {}
+        # self.service_purchase = {}
+
         # 处理请求的第二阶段，继续处理第一阶段处理完之后剩下的请求，这就需要购买新的服务器
         self.add_request_single_more_cpu.sort(key=lambda x: x["cpu_num"])
         self.add_request_single_equal.sort(key=lambda x: x["cpu_num"] + x["memory_size"])
@@ -112,6 +117,8 @@ class Algorithm(object):
         ps_dm, dm = self.double_more_memory_purchase(day)
 
         purchase_server = ps_sc + ps_se + ps_sm + ps_dc + ps_de + ps_dm
+
+
         ps = {}
         for i in purchase_server:
             if i[1] in ps:
@@ -642,7 +649,7 @@ class Algorithm(object):
         for server_dict in [self.server_single_more_cpu, self.server_single_equal, self.server_single_more_memory,
                             self.server_double_more_cpu, self.server_double_equal, self.server_double_more_memory]:
             for server_id, server in server_dict.items():
-                self.cost += server["server_hardware_cost"] + server["day"] * server["server_energy_cost"]
+                self.cost += server["server_hardware_cost"] + (self.daily_num - server["day"]) * server["server_energy_cost"]
         return self.cost
 
     def server_type_list_triple(self):
@@ -656,7 +663,9 @@ class Algorithm(object):
 
 def algorithm_demo():
     algorithm_result = Algorithm()
-    return algorithm_result.get_cost()
+    print(algorithm_result.get_cost())
+    return
+    # return algorithm_result.get_cost()
 
 if __name__ == "__main__":
     cost = algorithm_demo()
