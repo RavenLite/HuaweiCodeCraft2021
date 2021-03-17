@@ -133,6 +133,9 @@ class Algorithm(object):
 
         # 迁移阶段
 
+        # 分配后置 id
+        self.arrange_server_id()
+
         # 输出阶段
         print("(purchase, {})".format(len(purchase_server)))
 
@@ -651,6 +654,12 @@ class Algorithm(object):
             for server_id, server in server_dict.items():
                 self.cost += server["server_hardware_cost"] + (self.daily_num - server["day"]) * server["server_energy_cost"]
         return self.cost
+
+    def arrange_server_id(self):
+        type_set = []
+        server_list = self.server_type_list_more_cpu + self.server_type_list_equal + self.server_type_list_equal
+
+        pass
 
     def server_type_list_triple(self):
         for server in self.server_type_list:
