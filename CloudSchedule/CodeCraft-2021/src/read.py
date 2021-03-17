@@ -1,65 +1,7 @@
-
-# TrainingData Class, structures each training data
-class TrainingData(object):
-
-    def __init__(self, server_type_num, server_type_list, vm_type_num, vm_type_list, daily_num, daily_queue_list):
-        # number
-        self.server_type_num = server_type_num
-        # list of dict
-        self.server_type_list = server_type_list
-        # number
-        self.vm_type_num = vm_type_num
-        # list of dict
-        self.vm_type_list = vm_type_list
-        # number
-        self.daily_num = daily_num
-        # list of DailyQueue
-        self.daily_queue_list = daily_queue_list
-
-    def get_server_type_num(self):
-        return self.server_type_num
-
-    def get_server_type_list(self):
-        return self.server_type_list
-
-    def get_vm_type_num(self):
-        return self.vm_type_num
-
-    def get_vm_type_list(self):
-        return self.vm_type_list
-
-    def get_daily_num(self):
-        return self.daily_num
-
-    def get_daily_queue_list(self):
-        return self.daily_queue_list
-
-    def __str__(self):
-        return "server_type_num: {}\nvm_type_num: {}\ndaily_num: {}"\
-            .format(self.server_type_num, self.vm_type_num, self.daily_num)
-
-    def check(self):
-        return "correctness: " + str(self.server_type_num == len(self.server_type_list)
-                                     and self.vm_type_num == len(self.vm_type_list)
-                                     and self.daily_num == len(self.daily_queue_list))
+import read_file
 
 
-class DailyQueue(object):
-
-    def __init__(self, queue_length, queue_info):
-        # number
-        self.daily_queue_length = queue_length
-        # list of dict
-        self.daily_queue_info = queue_info
-
-    def get_daily_queue_length(self):
-        return self.daily_queue_length
-
-    def get_daily_queue_info(self):
-        return self.daily_queue_info
-
-
-def read_file():
+def read():
     server_type_num = int(input())
     server_type_list = []
     for i in range(server_type_num):
@@ -105,14 +47,14 @@ def read_file():
             }
             request_queue_list.append(request_item_info)
 
-        daily_queue = DailyQueue(request_queue_length, request_queue_list)
+        daily_queue = read_file.DailyQueue(request_queue_length, request_queue_list)
         request_list.append(daily_queue)
 
-    return TrainingData(server_type_num, server_type_list, vm_type_num, vm_type_list, daily_num, request_list)
+    return read_file.TrainingData(server_type_num, server_type_list, vm_type_num, vm_type_list, daily_num, request_list)
 
 
 def get_training_data():
-    training_data = read_file()
+    training_data = read()
     # print(training_data)
     # print(training_data.check())
     return training_data

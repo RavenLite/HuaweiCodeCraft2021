@@ -1,4 +1,5 @@
 
+
 # TrainingData Class, structures each training data
 class TrainingData(object):
 
@@ -47,9 +48,7 @@ class TrainingData(object):
 class DailyQueue(object):
 
     def __init__(self, queue_length, queue_info):
-        # number
         self.daily_queue_length = queue_length
-        # list of dict
         self.daily_queue_info = queue_info
 
     def get_daily_queue_length(self):
@@ -57,6 +56,37 @@ class DailyQueue(object):
 
     def get_daily_queue_info(self):
         return self.daily_queue_info
+
+
+class QueueItemInfo(object):
+
+    def __init__(self, request_item_action, request_item_vm_type, request_item_vm_id):
+        self.request_item_action = request_item_action
+        self.request_item_vm_type = request_item_vm_type
+        self.request_item_vm_id = request_item_vm_id
+
+
+class Server(object):
+
+    def __init__(self, server_name, server_cpu_num, server_memory_size, server_hardware_cost, server_energy_cost):
+        self.server_name = server_name
+        self.server_cpu_num = server_cpu_num
+        self.server_memory_size = server_memory_size
+        self.server_hardware_cost = server_hardware_cost
+        self.server_energy_cost = server_energy_cost
+        self.server_id = -1
+        self.server_daily_id = -1
+
+
+class VirtualMachine(object):
+
+    def __init__(self, vm_name, vm_cpu_num, vm_memory_size, vm_deployment_way):
+        self.vm_name = vm_name
+        self.vm_cpu_num = vm_cpu_num
+        self.vm_memory_size = vm_memory_size
+        self.vm_deployment_way = vm_deployment_way
+        self.vm_to_server_id = -1
+        self.vm_to_server_daily_id = -1
 
 
 def read_file():
@@ -69,14 +99,8 @@ def read_file():
         server_type_list = []
         for i in range(server_type_num):
             server_type_arr = f.readline().strip().replace("(", "").replace(")", "").split(", ")
-            server_type_dict = {
-                "server_name": server_type_arr[0],
-                "server_cpu_num": int(server_type_arr[1]),
-                "server_memory_size": int(server_type_arr[2]),
-                "server_hardware_cost": int(server_type_arr[3]),
-                "server_energy_cost": int(server_type_arr[4])
-            }
-            server_type_list.append(server_type_dict)
+            server_type_list.append(Server(server_type_arr[0], int(server_type_arr[1]), int(server_type_arr[2]),
+                                           int(server_type_arr[3]), int(server_type_arr[4])))
 
         # read vm type num
         vm_type_num = int(f.readline().strip())
@@ -85,13 +109,8 @@ def read_file():
         vm_type_list = []
         for i in range(vm_type_num):
             vm_type_arr = f.readline().strip().replace("(", "").replace(")", "").split(", ")
-            vm_type_dict = {
-                "vm_name": vm_type_arr[0],
-                "vm_cpu_num": int(vm_type_arr[1]),
-                "vm_memory_size": int(vm_type_arr[2]),
-                "vm_deployment_way": int(vm_type_arr[3]),
-            }
-            vm_type_list.append(vm_type_dict)
+            vm_type_list.append(VirtualMachine(vm_type_arr[0], int(vm_type_arr[1]),
+                                               int(vm_type_arr[2]), int(vm_type_arr[3])))
 
         # read day num
         daily_num = int(f.readline().strip())
@@ -103,12 +122,11 @@ def read_file():
             request_queue_list = []
             for j in range(request_queue_length):
                 request_item_arr = f.readline().strip().replace("(", "").replace(")", "").split(", ")
-                request_item_info = {
-                    "request_item_action": request_item_arr[0],
-                    "request_item_vm_type": request_item_arr[1] if request_item_arr[0] == "add" else "",
-                    "request_item_vm_id": int(request_item_arr[2] if request_item_arr[0] == "add" else request_item_arr[1])
-                }
-                request_queue_list.append(request_item_info)
+                request_queue_list.append(QueueItemInfo(
+                    request_item_arr[0],
+                    request_item_arr[1] if request_item_arr[0] == "add" else "",
+                    int(request_item_arr[2] if request_item_arr[0] == "add" else request_item_arr[1]))
+                )
 
             daily_queue = DailyQueue(request_queue_length, request_queue_list)
             request_list.append(daily_queue)
