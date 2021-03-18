@@ -1,12 +1,12 @@
-import read_file
-import demo
+import schedule_algorithm
+
 
 def main():
     # to read standard input
     # process
     # to write standard output
     # sys.stdout.flush()
-    demo.algorithm_demo()
+    schedule_algorithm.Algorithm().process_period_queue()
 
 
 if __name__ == "__main__":

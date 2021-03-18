@@ -21,16 +21,6 @@ class ResourcePool(object):
         self.vm_type_dict = {}
 
 
-# 每日记账
-class DailyAccount(object):
-
-    def __init__(self):
-        self.purchase_num = 0
-        self.purchase_list = []
-        self.migration_count = []
-        self.deployment_list = []
-
-
 class Algorithm(object):
     def __init__(self):
         training_data = read_file.get_training_data()

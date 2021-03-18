@@ -1,3 +1,5 @@
+import glog
+
 import constant
 
 
@@ -138,8 +140,8 @@ def read_file():
 
 def get_training_data():
     training_data = read_file()
-    print(training_data)
-    print(training_data.check())
+    glog.info(training_data)
+    glog.info(training_data.check())
     return training_data
 
 
