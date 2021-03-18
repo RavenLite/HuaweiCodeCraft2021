@@ -77,7 +77,7 @@ class Server(object):
 
     def __init__(self, server_type):
         self.server_type = server_type
-        self.server_id = -1
+        self.server_id = constant.VIRTUAL_SERVER_ID
         self.server_cpu_num_left_a = server_type.server_type_cpu_num / 2
         self.server_memory_size_left_a = server_type.server_type_memory_size / 2
         self.server_cpu_num_left_b = server_type.server_type_cpu_num / 2

@@ -1,7 +1,6 @@
-import glog
-
 import read_file
 import constant
+import output
 
 
 # 数据中心资源池，用于管理当前数据中心拥有的资源
@@ -19,6 +18,11 @@ class ResourcePool(object):
         # 加快请求速度，根据 type_name 构建字典, Static
         self.server_type_dict = {}
         self.vm_type_dict = {}
+
+
+# TODO: 优化该算法以便取得更好的调度结果
+def calculate_weight(ratio_cpu_num_left, ratio_memory_size_left, value_ratio, value_cost):
+    return ratio_cpu_num_left * 10 + ratio_memory_size_left * 10 + value_ratio * 10 + value_cost / 20000
 
 
 class Algorithm(object):
@@ -56,6 +60,7 @@ class Algorithm(object):
 
     # 处理当天的每一条请求
     def process_queue_item(self, queue_item, daily_id_dict):
+        # print("queue start")
         if queue_item.queue_item_action == constant.ACTION_ADD:
             self.process_queue_item_add(queue_item, daily_id_dict)
         else:
@@ -74,21 +79,35 @@ class Algorithm(object):
         queue_item_vm_type = self.resource_pool.vm_type_dict[queue_item.queue_item_vm_type_name]
 
         for server in self.resource_pool.server_list:
+            # TODO: 未考虑当天后续请求使用前序请求购买的新服务器
+            if server.server_id == -2:
+                continue
             # 指标 1，2: cpu，memory
+            # 单节点部署
             if queue_item_vm_type.vm_type_deployment_way == constant.VM_DEPLOYMENT_SINGLE:
+                # 剩余不足直接跳过
                 if server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num \
                         or server.server_cpu_num_left_b < queue_item_vm_type.vm_type_cpu_num \
                         or server.server_memory_size_left_a < queue_item_vm_type.vm_type_memory_size \
                         or server.server_memory_size_left_a < queue_item_vm_type.vm_type_memory_size:
                     continue
+
                 # 判断部署节点
-                server_node = constant.VM_NODE_A if server.server_cpu_num_left_a < server.server_cpu_num_left_b else constant.VM_NODE_B
+                server_node = constant.VM_NODE_A if server.server_cpu_num_left_a < server.server_cpu_num_left_b \
+                    else constant.VM_NODE_B
+
                 # 计算 cpu 剩余 ratio
-                value_cpu_num_left = server.server_cpu_num_left_a - queue_item_vm_type.vm_type_cpu_num if server.server_cpu_num_left_a < server.server_cpu_num_left_b else server.server_cpu_num_left_b - queue_item_vm_type.vm_type_cpu_num
+                value_cpu_num_left = server.server_cpu_num_left_a - queue_item_vm_type.vm_type_cpu_num \
+                    if server.server_cpu_num_left_a < server.server_cpu_num_left_b \
+                    else server.server_cpu_num_left_b - queue_item_vm_type.vm_type_cpu_num
                 ratio_cpu_num_left = value_cpu_num_left / server.server_type.server_type_cpu_num
+
                 # 计算 memory 剩余 ratio
-                value_memory_size_left = server.server_memory_size_left_a - queue_item_vm_type.vm_type_memory_size if server.server_memory_size_left_a < server.server_memory_size_left_b else server.server_cpu_num_left_b - queue_item_vm_type.vm_type_memory_size
+                value_memory_size_left = server.server_memory_size_left_a - queue_item_vm_type.vm_type_memory_size \
+                    if server.server_memory_size_left_a < server.server_memory_size_left_b \
+                    else server.server_cpu_num_left_b - queue_item_vm_type.vm_type_memory_size
                 ratio_memory_size_left = value_memory_size_left / server.server_type.server_type_memory_size
+            # 双节点部署
             else:
                 if server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num / 2 \
                         or server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num / 2 \
@@ -97,10 +116,12 @@ class Algorithm(object):
                     continue
                 server_node = constant.VM_NODE_AB
 
-                value_cpu_num_left = server.server_cpu_num_left_a + server.server_cpu_num_left_a - queue_item_vm_type.vm_type_cpu_num
+                value_cpu_num_left = server.server_cpu_num_left_a + server.server_cpu_num_left_a - queue_item_vm_type.\
+                    vm_type_cpu_num
                 ratio_cpu_num_left = value_cpu_num_left / server.server_type.server_type_cpu_num
-                value_memory_size_left = server.server_memory_size_left_b + server.server_memory_size_left_b - queue_item_vm_type.vm_type_memory_size
-                ratio_memory_size_left = value_memory_size_left/ server.server_type.server_type_memory_size
+                value_memory_size_left = server.server_memory_size_left_b + server.\
+                    server_memory_size_left_b - queue_item_vm_type.vm_type_memory_size
+                ratio_memory_size_left = value_memory_size_left / server.server_type.server_type_memory_size
 
             # 硬性条件不满足的设备直接跳过
             if value_cpu_num_left < 0 or value_memory_size_left < 0:
@@ -114,11 +135,12 @@ class Algorithm(object):
             value_cost = server.server_type.server_type_hardware_cost
 
             # 根据权值计算
-            server_weight_value = self.calculate_weight(ratio_cpu_num_left, ratio_memory_size_left, value_ratio, value_cost)
+            server_weight_value = calculate_weight(ratio_cpu_num_left, ratio_memory_size_left, value_ratio, value_cost)
 
             # 判断是否更优
             if server_weight_value < min_value:
                 min_value = server_weight_value
+                # print("server_id: {}, min_value: {}".format(server.server_id, min_value))
                 best_server = server
                 temp_value_cpu_num_left = value_cpu_num_left
                 temp_value_memory_size_left = value_memory_size_left
@@ -131,17 +153,18 @@ class Algorithm(object):
         # 判断是否需要新购买服务器
         if best_server.server_id == -1:
             # 标记为当天新购买的服务器
-            best_server.server_id = -2
-            self.purchase_server(best_server.server_type)
+            best_server.server_id = constant.NEW_SERVER_ID
+
             queue_item.server_daily_id = self.server_daily_id
             queue_item.server_id = best_server.server_id
             queue_item.server_node = temp_node
+            # 购买服务器
+            self.purchase_server(best_server.server_type)
 
             daily_id_dict[queue_item.server_daily_id] = best_server
         else:
             queue_item.server_id = best_server.server_id
             queue_item.server_node = temp_node
-            pass
 
     def purchase_server(self, server_type):
         # 添加服务器
@@ -149,11 +172,9 @@ class Algorithm(object):
         new_server.server_daily_id = self.server_daily_id
         self.server_daily_id += 1
 
-    def calculate_weight(self, ratio_cpu_num_left, ratio_memory_size_left, value_ratio, value_cost):
-        return ratio_cpu_num_left * 10 + ratio_memory_size_left * 10 + value_ratio * 10 + value_cost / 20000
-
     # 处理删除请求
     def process_queue_item_del(self, queue_item):
+        
         pass
 
     # 处理每一天的请求队列的前置操作
@@ -167,11 +188,10 @@ class Algorithm(object):
         for vm_type in self.vm_type_list:
             self.resource_pool.vm_type_dict[vm_type.vm_type_name] = vm_type
 
-        self.server_daily_id = 0
-
     # 处理当前的请求队列的前置操作
     def before_process_daily_queue(self):
         self.migrate_vm()
+        self.server_daily_id = 0
 
     # 处理当前的请求队列的后置操作
     def after_process_daily_queue(self, daily_queue, daily_id_dict):
@@ -179,26 +199,10 @@ class Algorithm(object):
         type_count_dict, type_list = self.arrange_server_id()
         # 更新使用了新服务器的 item 的 server_id
         for queue_item in daily_queue.queue_item_list:
-            glog.info("server_daily_id: {}".format(queue_item.server_daily_id))
-            if queue_item.server_id == -2:
+            if queue_item.queue_item_action == constant.ACTION_ADD and queue_item.server_id == constant.NEW_SERVER_ID:
                 queue_item.server_id = daily_id_dict[queue_item.server_daily_id].server_id
 
-        self.output_daily(type_count_dict, type_list, daily_queue)
-
-    def output_daily(self, type_count_dict, type_list, daily_queue):
-        purchase_type_list = type_count_dict.keys()
-        purchase_type_count = len(purchase_type_list)
-        print(("purchase", purchase_type_count))
-        for i in range(purchase_type_count):
-            print((purchase_type_list[i], type_count_dict[purchase_type_list[i]]))
-        print(("migration", 0))
-        for queue_item in daily_queue:
-            if queue_item.server_node == constant.VM_NODE_AB:
-                print((queue_item.server_id))
-            else:
-                print((queue_item.server_id, queue_item.server_node))
-        pass
-
+        output.output_daily(type_count_dict, daily_queue)
 
     # 迁移资源
     def migrate_vm(self):
@@ -217,7 +221,7 @@ class Algorithm(object):
 
         # 第一次循环，统计类型和数量
         for server in self.resource_pool.server_list:
-            if server.server_id == -2:
+            if server.server_id == constant.NEW_SERVER_ID:
                 if server.server_type.server_type_name in type_count_dict.keys():
                     type_count_dict[server.server_type.server_type_name] += 1
                 else:
@@ -232,7 +236,7 @@ class Algorithm(object):
             type_offset_dict[server_type_name] = 0
 
         for server in self.resource_pool.server_list:
-            if server.server_id == -2:
+            if server.server_id == constant.NEW_SERVER_ID:
                 server_type_name = server.server_type.server_type_name
                 server.server_id = type_start_dict[server_type_name] + type_offset_dict[server_type_name]
                 type_offset_dict[server_type_name] += 1

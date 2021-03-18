@@ -16,3 +16,7 @@ VM_NODE_AB = "AB"
 
 # common
 NULL_STRING = ""
+
+# server default id
+VIRTUAL_SERVER_ID = -1
+NEW_SERVER_ID = -2
