@@ -62,7 +62,7 @@ class Algorithm(object):
             request_id += 1
             if request["request_item_action"] == "add":
                 for vm in self.vm_type_list:
-                    if vm["vm_name"] == request["request_item_vm_type"]:
+                    if vm["vm_name"] == request["request_item_vm_type"]: # 这里可以优化
                         # 根据 cpu 和 memory 特征，将请求分为六类
                         request.update({"cpu_num": vm["vm_cpu_num"], "memory_size": vm["vm_memory_size"]})
                         if vm["vm_deployment_way"] == 0 and abs(vm["vm_cpu_num"] - vm["vm_memory_size"]) < 20:

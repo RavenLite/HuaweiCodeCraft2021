@@ -1,5 +1,4 @@
 
-
 # TrainingData Class, structures each training data
 class TrainingData(object):
 
@@ -64,29 +63,72 @@ class QueueItemInfo(object):
         self.request_item_action = request_item_action
         self.request_item_vm_type = request_item_vm_type
         self.request_item_vm_id = request_item_vm_id
+        # self.server_id = -1
+        # self.request_vm_id = -1
+        # self.request_server_id = -1
+        self.request_type = -1  # 这个是 cpu memory equal 的分类
+        self.request_cpu = -1
+        self.request_memory = -1
+
+
+# class ServerInclude(object):
+#
+#     def __init__(self, request_item_vm_id, cpu_num, memory_size, department):
+#         self.request_item_vm_id = request_item_vm_id
+#         self.cpu_num = cpu_num
+#         self.memory_size = memory_size
+#         self.department = department
+#
+#
+# class PurchaseServer(object):
+#
+#     def __init__(self, server_id, server_name):
+#         self.server_id = server_id
+#         self.server_name = server_name
+
+
+class Decision(object):
+
+    def __init__(self, request_id, server_id, department, request_type="add"):
+        self.request_id = request_id
+        self.server_id = server_id
+        self.department = department
+        self.request_type = request_type
 
 
 class Server(object):
 
-    def __init__(self, server_name, server_cpu_num, server_memory_size, server_hardware_cost, server_energy_cost):
+    def __init__(self, server_name, server_cpu_num, server_memory_size, server_hardware_cost, server_energy_cost,
+                 server_id=-1, server_daily_id=-1, day=-1, already_cost=0, decision=None):
         self.server_name = server_name
         self.server_cpu_num = server_cpu_num
         self.server_memory_size = server_memory_size
         self.server_hardware_cost = server_hardware_cost
         self.server_energy_cost = server_energy_cost
-        self.server_id = -1
-        self.server_daily_id = -1
+        self.server_id = server_id
+        self.server_daily_id = server_daily_id
+        self.A_rest_cpu_num = server_cpu_num / 2
+        self.A_rest_memory_size = server_memory_size / 2
+        self.B_rest_cpu_num = server_cpu_num / 2
+        self.B_rest_memory_size = server_memory_size / 2
+        self.vm_include = []
+        self.day = day
+        self.already_cost = already_cost
+        self.decision = decision
+
 
 
 class VirtualMachine(object):
 
-    def __init__(self, vm_name, vm_cpu_num, vm_memory_size, vm_deployment_way):
+    def __init__(self, vm_name, vm_cpu_num, vm_memory_size, vm_deployment_way, vm_type=-1,
+                 vm_to_server_id=-1, vm_to_daily_id=-1):
         self.vm_name = vm_name
         self.vm_cpu_num = vm_cpu_num
         self.vm_memory_size = vm_memory_size
         self.vm_deployment_way = vm_deployment_way
-        self.vm_to_server_id = -1
-        self.vm_to_server_daily_id = -1
+        self.vm_type = vm_type
+        self.vm_to_server_id = vm_to_server_id
+        self.vm_to_daily_id = vm_to_daily_id
 
 
 def read_file():
