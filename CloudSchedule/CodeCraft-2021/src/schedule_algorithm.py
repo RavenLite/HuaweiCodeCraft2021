@@ -12,8 +12,11 @@ class ResourcePool(object):
         # 数据中心拥有的 vm 列表
         self.vm_list = []
 
+        # vm 归属的 server_id
+        self.vm_server_id_dict = {}
+
         # 拥有的真实 Server 数量
-        self.real_server_count = 0
+        self.real_server_count = constant.ZERO_NUM
 
         # 加快请求速度，根据 type_name 构建字典, Static
         self.server_type_dict = {}
@@ -39,7 +42,7 @@ class Algorithm(object):
 
         # initialize assisted fields | 初始化辅助变量
         self.resource_pool = ResourcePool()
-        self.server_daily_id = 0
+        self.server_daily_id = constant.ZERO_NUM
 
     # 处理每一天的请求队列
     def process_period_queue(self):
@@ -70,9 +73,9 @@ class Algorithm(object):
     def process_queue_item_add(self, queue_item, daily_id_dict):
         # 初始化临时最优变量
         best_server = None
-        min_value = 100000000
-        temp_value_cpu_num_left = 0
-        temp_value_memory_size_left = 0
+        min_value = constant.MIN_VALUE_INITIAL
+        temp_value_cpu_num_left = constant.ZERO_NUM
+        temp_value_memory_size_left = constant.ZERO_NUM
 
         temp_node = constant.NULL_STRING
         # 解析请求需求
@@ -80,16 +83,17 @@ class Algorithm(object):
 
         for server in self.resource_pool.server_list:
             # TODO: 未考虑当天后续请求使用前序请求购买的新服务器
-            if server.server_id == -2:
+            if server.server_id == constant.NEW_SERVER_ID:
                 continue
             # 指标 1，2: cpu，memory
             # 单节点部署
             if queue_item_vm_type.vm_type_deployment_way == constant.VM_DEPLOYMENT_SINGLE:
                 # 剩余不足直接跳过
+                # TODO: 有问题，需要修改
                 if server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num \
                         or server.server_cpu_num_left_b < queue_item_vm_type.vm_type_cpu_num \
                         or server.server_memory_size_left_a < queue_item_vm_type.vm_type_memory_size \
-                        or server.server_memory_size_left_a < queue_item_vm_type.vm_type_memory_size:
+                        or server.server_memory_size_left_b < queue_item_vm_type.vm_type_memory_size:
                     continue
 
                 # 判断部署节点
@@ -151,7 +155,7 @@ class Algorithm(object):
         best_server.server_memory_size_left = temp_value_memory_size_left
 
         # 判断是否需要新购买服务器
-        if best_server.server_id == -1:
+        if best_server.server_id == constant.VIRTUAL_SERVER_ID:
             # 标记为当天新购买的服务器
             best_server.server_id = constant.NEW_SERVER_ID
 
@@ -166,6 +170,9 @@ class Algorithm(object):
             queue_item.server_id = best_server.server_id
             queue_item.server_node = temp_node
 
+        # TODO: 更新 vm-server dict
+        self.resource_pool.vm_server_id_dict[best_server.server_id] = best_server.server_id
+
     def purchase_server(self, server_type):
         # 添加服务器
         new_server = read_file.Server(server_type)
@@ -174,7 +181,7 @@ class Algorithm(object):
 
     # 处理删除请求
     def process_queue_item_del(self, queue_item):
-        
+
         pass
 
     # 处理每一天的请求队列的前置操作

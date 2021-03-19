@@ -16,6 +16,8 @@ VM_NODE_AB = "AB"
 
 # common
 NULL_STRING = ""
+ZERO_NUM = 0
+MIN_VALUE_INITIAL = 100000000
 
 # server default id
 VIRTUAL_SERVER_ID = -1
