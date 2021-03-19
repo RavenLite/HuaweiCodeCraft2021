@@ -52,84 +52,88 @@ class Algorithm(object):
 
     # 处理当天的请求队列
     def process_daily_queue(self, daily_queue):
-        daily_id_dict = {}
+        old_new_server_id_dict = {}
 
         self.before_process_daily_queue()
 
         for queue_item in daily_queue.queue_item_list:
-            self.process_queue_item(queue_item, daily_id_dict)
+            self.process_queue_item(queue_item)
 
-        self.after_process_daily_queue(daily_queue, daily_id_dict)
+        self.after_process_daily_queue(daily_queue, old_new_server_id_dict)
 
     # 处理当天的每一条请求
-    def process_queue_item(self, queue_item, daily_id_dict):
+    def process_queue_item(self, queue_item):
         # print("queue start")
         if queue_item.queue_item_action == constant.ACTION_ADD:
-            self.process_queue_item_add(queue_item, daily_id_dict)
+            self.process_queue_item_add(queue_item)
         else:
             self.process_queue_item_del(queue_item)
 
     # 处理添加请求
-    def process_queue_item_add(self, queue_item, daily_id_dict):
+    def process_queue_item_add(self, queue_item):
         # 初始化临时最优变量
         best_server = None
         min_value = constant.MIN_VALUE_INITIAL
         temp_value_cpu_num_left = constant.ZERO_NUM
         temp_value_memory_size_left = constant.ZERO_NUM
+        temp_value_cpu_num_left_a = constant.ZERO_NUM
+        temp_value_cpu_num_left_b = constant.ZERO_NUM
+        temp_value_memory_size_left_a = constant.ZERO_NUM
+        temp_value_memory_size_left_b = constant.ZERO_NUM
 
         temp_node = constant.NULL_STRING
         # 解析请求需求
         queue_item_vm_type = self.resource_pool.vm_type_dict[queue_item.queue_item_vm_type_name]
 
         for server in self.resource_pool.server_list:
-            # TODO: 未考虑当天后续请求使用前序请求购买的新服务器
-            if server.server_id == constant.NEW_SERVER_ID:
-                continue
             # 指标 1，2: cpu，memory
             # 单节点部署
             if queue_item_vm_type.vm_type_deployment_way == constant.VM_DEPLOYMENT_SINGLE:
                 # 剩余不足直接跳过
-                # TODO: 有问题，需要修改
-                if server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num \
-                        or server.server_cpu_num_left_b < queue_item_vm_type.vm_type_cpu_num \
-                        or server.server_memory_size_left_a < queue_item_vm_type.vm_type_memory_size \
-                        or server.server_memory_size_left_b < queue_item_vm_type.vm_type_memory_size:
+                if (server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num and server.server_cpu_num_left_b < queue_item_vm_type.vm_type_cpu_num) or (server.server_memory_size_left_a < queue_item_vm_type.vm_type_memory_size and server.server_memory_size_left_b < queue_item_vm_type.vm_type_memory_size):
                     continue
 
-                # 判断部署节点
-                server_node = constant.VM_NODE_A if server.server_cpu_num_left_a < server.server_cpu_num_left_b \
-                    else constant.VM_NODE_B
+                # 判断部署节点，优先部署 A 节点
+                server_node = constant.VM_NODE_A \
+                    if server.server_cpu_num_left_a > queue_item_vm_type.vm_type_cpu_num and server.\
+                    server_memory_size_left_a > queue_item_vm_type.vm_type_memory_size else constant.VM_NODE_B
 
                 # 计算 cpu 剩余 ratio
                 value_cpu_num_left = server.server_cpu_num_left_a - queue_item_vm_type.vm_type_cpu_num \
-                    if server.server_cpu_num_left_a < server.server_cpu_num_left_b \
+                    if server == constant.VM_NODE_A \
                     else server.server_cpu_num_left_b - queue_item_vm_type.vm_type_cpu_num
-                ratio_cpu_num_left = value_cpu_num_left / server.server_type.server_type_cpu_num
+                ratio_cpu_num_left = value_cpu_num_left / server.server_type.server_type_cpu_num / 2
 
                 # 计算 memory 剩余 ratio
                 value_memory_size_left = server.server_memory_size_left_a - queue_item_vm_type.vm_type_memory_size \
-                    if server.server_memory_size_left_a < server.server_memory_size_left_b \
+                    if server == constant.VM_NODE_A \
                     else server.server_cpu_num_left_b - queue_item_vm_type.vm_type_memory_size
-                ratio_memory_size_left = value_memory_size_left / server.server_type.server_type_memory_size
+                ratio_memory_size_left = value_memory_size_left / server.server_type.server_type_memory_size / 2
             # 双节点部署
             else:
+                # 剩余不足直接跳过
                 if server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num / 2 \
                         or server.server_cpu_num_left_a < queue_item_vm_type.vm_type_cpu_num / 2 \
                         or server.server_memory_size_left_a < queue_item_vm_type.vm_type_memory_size / 2 \
                         or server.server_memory_size_left_b < queue_item_vm_type.vm_type_memory_size / 2:
                     continue
+                # 确定部署节点
                 server_node = constant.VM_NODE_AB
 
-                value_cpu_num_left = server.server_cpu_num_left_a + server.server_cpu_num_left_a - queue_item_vm_type.\
+                # 计算 cpu 剩余 ratio
+                value_cpu_num_left = server.server_cpu_num_left_a + server.server_cpu_num_left_b - queue_item_vm_type. \
                     vm_type_cpu_num
                 ratio_cpu_num_left = value_cpu_num_left / server.server_type.server_type_cpu_num
-                value_memory_size_left = server.server_memory_size_left_b + server.\
+                value_cpu_num_left_a = server.server_cpu_num_left_a - queue_item_vm_type.vm_type_cpu_num / 2
+                value_cpu_num_left_b = server.server_cpu_num_left_b - queue_item_vm_type.vm_type_cpu_num / 2
+
+                # 计算 memory 剩余 ratio
+                value_memory_size_left = server.server_memory_size_left_a + server. \
                     server_memory_size_left_b - queue_item_vm_type.vm_type_memory_size
                 ratio_memory_size_left = value_memory_size_left / server.server_type.server_type_memory_size
 
-            # 硬性条件不满足的设备直接跳过
-            if value_cpu_num_left < 0 or value_memory_size_left < 0:
-                continue
+                value_memory_size_left_a = server.server_cpu_num_left_a - queue_item_vm_type.vm_type_memory_size / 2
+                value_memory_size_left_b = server.server_cpu_num_left_b - queue_item_vm_type.vm_type_memory_size / 2
 
             # 指标 3: ratio
             value_ratio = abs(server.server_type.server_type_ratio - queue_item_vm_type.vm_type_ratio)
@@ -150,22 +154,35 @@ class Algorithm(object):
                 temp_value_memory_size_left = value_memory_size_left
                 temp_node = server_node
 
+                if server == constant.VM_NODE_AB:
+                    temp_value_cpu_num_left_a = value_cpu_num_left_a
+                    temp_value_cpu_num_left_b = value_cpu_num_left_b
+                    temp_value_memory_size_left_a = value_memory_size_left_a
+                    temp_value_memory_size_left_b = value_memory_size_left_b
+
         # 扣掉 cpu 和 memory
-        best_server.server_cpu_num_left = temp_value_cpu_num_left
-        best_server.server_memory_size_left = temp_value_memory_size_left
+        if temp_node == constant.VM_NODE_A:
+            best_server.server_cpu_num_left_a = temp_value_cpu_num_left
+            best_server.server_memory_size_left_a = temp_value_memory_size_left
+        elif temp_node == constant.VM_NODE_B:
+            best_server.server_cpu_num_left_b = temp_value_cpu_num_left
+            best_server.server_memory_size_left_b = temp_value_memory_size_left
+        else:
+            best_server.server_cpu_num_left_a = temp_value_cpu_num_left_a
+            best_server.server_memory_size_left_a = temp_value_memory_size_left_a
+            best_server.server_cpu_num_left_b = temp_value_cpu_num_left_b
+            best_server.server_memory_size_left_b = temp_value_memory_size_left_b
 
         # 判断是否需要新购买服务器
+        print(best_server.server_id == constant.VIRTUAL_SERVER_ID)
         if best_server.server_id == constant.VIRTUAL_SERVER_ID:
             # 标记为当天新购买的服务器
-            best_server.server_id = constant.NEW_SERVER_ID
+            best_server.server_id = constant.NEW_SERVER_ID - self.server_daily_id
 
-            queue_item.server_daily_id = self.server_daily_id
             queue_item.server_id = best_server.server_id
             queue_item.server_node = temp_node
             # 购买服务器
             self.purchase_server(best_server.server_type)
-
-            daily_id_dict[queue_item.server_daily_id] = best_server
         else:
             queue_item.server_id = best_server.server_id
             queue_item.server_node = temp_node
@@ -176,8 +193,8 @@ class Algorithm(object):
     def purchase_server(self, server_type):
         # 添加服务器
         new_server = read_file.Server(server_type)
-        new_server.server_daily_id = self.server_daily_id
         self.server_daily_id += 1
+        self.resource_pool.server_list.append(new_server)
 
     # 处理删除请求
     def process_queue_item_del(self, queue_item):
@@ -201,13 +218,13 @@ class Algorithm(object):
         self.server_daily_id = 0
 
     # 处理当前的请求队列的后置操作
-    def after_process_daily_queue(self, daily_queue, daily_id_dict):
+    def after_process_daily_queue(self, daily_queue, old_new_server_id_dict):
         # 为新服务器分配 server_id
-        type_count_dict, type_list = self.arrange_server_id()
+        type_count_dict, type_list = self.arrange_server_id(old_new_server_id_dict)
         # 更新使用了新服务器的 item 的 server_id
         for queue_item in daily_queue.queue_item_list:
-            if queue_item.queue_item_action == constant.ACTION_ADD and queue_item.server_id == constant.NEW_SERVER_ID:
-                queue_item.server_id = daily_id_dict[queue_item.server_daily_id].server_id
+            if queue_item.queue_item_action == constant.ACTION_ADD and queue_item.server_id <= constant.NEW_SERVER_ID:
+                queue_item.server_id = old_new_server_id_dict[queue_item.server_id]
 
         output.output_daily(type_count_dict, daily_queue)
 
@@ -216,7 +233,7 @@ class Algorithm(object):
         pass
 
     # 分配服务器ID
-    def arrange_server_id(self):
+    def arrange_server_id(self, old_new_server_id_dict):
         # 服务器类型 - 类型服务器数量
         type_count_dict = {}
         # 服务器类型 - 类型服务器 id 起点
@@ -228,7 +245,7 @@ class Algorithm(object):
 
         # 第一次循环，统计类型和数量
         for server in self.resource_pool.server_list:
-            if server.server_id == constant.NEW_SERVER_ID:
+            if server.server_id <= constant.NEW_SERVER_ID:
                 if server.server_type.server_type_name in type_count_dict.keys():
                     type_count_dict[server.server_type.server_type_name] += 1
                 else:
@@ -242,11 +259,17 @@ class Algorithm(object):
             daily_server_count += type_count_dict[server_type_name]
             type_offset_dict[server_type_name] = 0
 
+        # 第二次循环，分配 server id
         for server in self.resource_pool.server_list:
-            if server.server_id == constant.NEW_SERVER_ID:
+            if server.server_id <= constant.NEW_SERVER_ID:
                 server_type_name = server.server_type.server_type_name
-                server.server_id = type_start_dict[server_type_name] + type_offset_dict[server_type_name]
+                # 计算得到新的 server id
+                new_server_id = type_start_dict[server_type_name] + type_offset_dict[server_type_name]
                 type_offset_dict[server_type_name] += 1
+                # 记录当天临时 server id 与新的 server id 的关系
+                old_new_server_id_dict[server.server_id] = new_server_id
+                # 赋予 server 以新的 id
+                server.server_id = new_server_id
 
         return type_count_dict, type_list
 
