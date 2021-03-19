@@ -50,7 +50,7 @@ class Algorithm(object):
     def process_period_queue(self):
         self.before_process_period_queue()
         for index, daily_queue in enumerate(self.daily_queue_list):
-            glog.info("Running: {}/1000, ServerCount: {}".format(index, len(self.resource_pool.server_list)))
+            glog.info("Running: {}/{}, ServerCount: {}".format(index, self.daily_num, len(self.resource_pool.server_list)))
             self.process_daily_queue(daily_queue)
 
     # 处理当天的请求队列
