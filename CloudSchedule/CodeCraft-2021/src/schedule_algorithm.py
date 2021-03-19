@@ -44,13 +44,13 @@ class Algorithm(object):
 
         # initialize assisted fields | 初始化辅助变量
         self.resource_pool = ResourcePool()
-        self.server_daily_id = constant.ZERO_NUM
+        self.server_daily_count = constant.ZERO_NUM
 
     # 处理每一天的请求队列
     def process_period_queue(self):
         self.before_process_period_queue()
         for index, daily_queue in enumerate(self.daily_queue_list):
-            glog.info("Running: {}/800".format(index))
+            glog.info("Running: {}/1000, ServerCount: {}".format(index, len(self.resource_pool.server_list)))
             self.process_daily_queue(daily_queue)
 
     # 处理当天的请求队列
@@ -185,7 +185,7 @@ class Algorithm(object):
         # 判断是否需要新购买服务器
         if best_server.server_id == constant.VIRTUAL_SERVER_ID:
             # 标记为当天新购买的服务器
-            best_server.server_id = constant.NEW_SERVER_ID - self.server_daily_id
+            best_server.server_id = constant.NEW_SERVER_ID - self.server_daily_count
 
             queue_item.server_id = best_server.server_id
             queue_item.server_node = temp_node
@@ -204,7 +204,7 @@ class Algorithm(object):
     def purchase_server(self, server_type):
         # 添加服务器
         new_server = read_file.Server(server_type)
-        self.server_daily_id += 1
+        self.server_daily_count += 1
         self.resource_pool.server_list.append(new_server)
 
     # 处理删除请求
@@ -239,7 +239,7 @@ class Algorithm(object):
     # 处理当前的请求队列的前置操作
     def before_process_daily_queue(self):
         self.migrate_vm()
-        self.server_daily_id = 0
+        self.server_daily_count = 0
 
     # 处理当前的请求队列的后置操作
     def after_process_daily_queue(self, daily_queue, old_new_server_id_dict):

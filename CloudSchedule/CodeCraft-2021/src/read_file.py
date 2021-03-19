@@ -1,5 +1,3 @@
-import glog
-
 import constant
 
 
@@ -83,8 +81,6 @@ class Server(object):
         self.server_cpu_num_left_b = server_type.server_type_cpu_num / 2
         self.server_memory_size_left_b = server_type.server_type_memory_size / 2
 
-        self.server_daily_id = -1
-
 
 class VirtualMachine(object):
 
@@ -94,7 +90,7 @@ class VirtualMachine(object):
 
 
 def read_file():
-    with open('../../training_data/training-1.txt') as f:
+    with open('../../training_data/training-2.txt') as f:
 
         # read server type num
         server_type_num = int(f.readline().strip())
@@ -140,8 +136,6 @@ def read_file():
 
 def get_training_data():
     training_data = read_file()
-    glog.info(training_data)
-    glog.info(training_data.check())
     return training_data
 
 
