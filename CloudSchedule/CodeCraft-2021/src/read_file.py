@@ -94,7 +94,7 @@ class VirtualMachine(object):
 
 
 def read_file():
-    with open('../../training_data/training-3.txt') as f:
+    with open('../../training_data/training-1.txt') as f:
 
         # read server type num
         server_type_num = int(f.readline().strip())
