@@ -3,10 +3,7 @@ package pojo;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/**
- * @Author: Raven
- * @Date: 2021/3/23 9:11 PM
- */
+
 public class TrainingData {
     private int serverTypeNum;
     private HashMap<String, ServerType> serverTypeMap;

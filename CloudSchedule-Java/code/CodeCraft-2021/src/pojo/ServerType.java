@@ -1,9 +1,6 @@
 package pojo;
 
-/**
- * @Author: Raven
- * @Date: 2021/3/23 8:56 PM
- */
+
 public class ServerType {
     private String serverTypeName;
     private int serverTypeCpuNum;

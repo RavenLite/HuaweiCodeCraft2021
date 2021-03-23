@@ -1,9 +1,6 @@
 package pojo;
 
-/**
- * @Author: Raven
- * @Date: 2021/3/23 9:12 PM
- */
+
 public class QueueItem {
     private String queueItemAction;
     private VmType queueItemVmType;

@@ -1,9 +1,6 @@
 package pojo;
 
-/**
- * @Author: Raven
- * @Date: 2021/3/23 9:10 PM
- */
+
 public class Vm {
     private VmType vmType;
     private int vmId;

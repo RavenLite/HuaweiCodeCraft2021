@@ -1,9 +1,6 @@
 package pojo;
 
-/**
- * @Author: Raven
- * @Date: 2021/3/23 8:52 PM
- */
+
 public class Server {
     private int serverId;
     private ServerType serverType;
@@ -12,13 +9,13 @@ public class Server {
     private int serverMemoryNumLeftA;
     private int serverMemoryNumLeftB;
 
-    public Server(ServerType serverType, int serverCpuNumLeftA, int serverCpuNumLeftB, int serverMemoryNumLeftA, int serverMemoryNumLeftB){
+    public Server(ServerType serverType){
         this.serverId = -1;
         this.serverType = serverType;
-        this.serverCpuNumLeftA = serverCpuNumLeftA;
-        this.serverCpuNumLeftB = serverCpuNumLeftB;
-        this.serverMemoryNumLeftA = serverMemoryNumLeftA;
-        this.serverMemoryNumLeftB = serverMemoryNumLeftB;
+        this.serverCpuNumLeftA = serverType.getServerTypeCpuNum() / 2;
+        this.serverCpuNumLeftB = serverType.getServerTypeCpuNum() / 2;
+        this.serverMemoryNumLeftA = serverType.getServerTypeMemoryNum() / 2;
+        this.serverMemoryNumLeftB = serverType.getServerTypeMemoryNum() / 2;
     }
 
 

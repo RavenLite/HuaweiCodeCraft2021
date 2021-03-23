@@ -2,10 +2,7 @@ package pojo;
 
 import java.util.ArrayList;
 
-/**
- * @Author: Raven
- * @Date: 2021/3/23 9:14 PM
- */
+
 public class DailyQueue {
     private int queueItemNum;
     private ArrayList<QueueItem> queueItemList;

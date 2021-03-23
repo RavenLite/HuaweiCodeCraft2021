@@ -1,9 +1,6 @@
 package pojo;
 
-/**
- * @Author: Raven
- * @Date: 2021/3/23 9:05 PM
- */
+
 public class VmType {
     private String vmTypeName;
     private int vmTypeCpuNum;
