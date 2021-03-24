@@ -18,6 +18,10 @@ public class Server {
 
     private static Constant constant = new Constant();
 
+    public Server() {
+
+    }
+
     public Server(ServerType serverType){
         this.serverId = -1;
         this.serverType = serverType;

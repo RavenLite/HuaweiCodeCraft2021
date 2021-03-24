@@ -27,7 +27,7 @@ public class ScheduleAlgorithm {
     }
 
     // 处理周期的请求队列
-    public void processPeriodQueue(){
+    public void processPeriodQueue() {
         this.beforeProcessPeriodQueue();
 
         this.trainingData.getDailyQueueList().forEach(
@@ -53,8 +53,8 @@ public class ScheduleAlgorithm {
     }
 
     // 处理当天的每一条请求
-    private void processQueueItem(QueueItem queueItem){
-        if(constant.ACTION_ADD.equals(queueItem.getQueueItemAction())){
+    private void processQueueItem(QueueItem queueItem) {
+        if (constant.ACTION_ADD.equals(queueItem.getQueueItemAction())) {
             this.processQueueItemAdd(queueItem);
         } else {
             this.processQueueItemDel(queueItem);
@@ -62,53 +62,46 @@ public class ScheduleAlgorithm {
     }
 
     // 处理添加请求
-    private void processQueueItemAdd(QueueItem queueItem){
+    private void processQueueItemAdd(QueueItem queueItem) {
         VmType queueItemVmType = queueItem.getQueueItemVmType();
         Vm createdVm = this.resourcePool.createVm(queueItem.getQueueItemVmId(), queueItem.getQueueItemVmType());
         queueItem.setQueueVm(createdVm);
 
-        // 临时最优变量
-        var ref = new Object() {
-            float bestServerEvaluation = constant.MIN_VALUE_INITIAL;
-            Server bestServer;
-            String bestDeployNode;
-        };
+        float tempBestServerEvaluation = constant.MIN_VALUE_INITIAL;
+        Server tempBestServer = new Server();
+        String tempBestDeployNode = null;
 
-        this.resourcePool.getServerList().forEach(
-                server -> {
-                    // 判断该服务器剩余空间是否满足条件
-                    if(!this.hasEnoughSpace(queueItem, server)){
-                        return;
-                    }
+        for (Server server : this.resourcePool.getServerList()) {
+            // 判断该服务器剩余空间是否满足条件
+            if (!this.hasEnoughSpace(queueItem, server)) {
+                continue;
+            }
 
-                    // 指标 1, 2: CPU, Memory
-                    MultipleReturn ratioCpuAndMemoryLeft = this.calculateRatioCpuAndMemoryLeft(queueItemVmType, server);
-                    float ratioServerCpuNumLeft = ratioCpuAndMemoryLeft.getFirst();
-                    float ratioServerMemoryNumLeft = ratioCpuAndMemoryLeft.getSecond();
-                    String deployNode = ratioCpuAndMemoryLeft.getThird();
+            // 指标 1, 2: CPU, Memory
+            MultipleReturn ratioCpuAndMemoryLeft = this.calculateRatioCpuAndMemoryLeft(queueItemVmType, server);
+            float ratioServerCpuNumLeft = ratioCpuAndMemoryLeft.getFirst();
+            float ratioServerMemoryNumLeft = ratioCpuAndMemoryLeft.getSecond();
+            String deployNode = ratioCpuAndMemoryLeft.getThird();
 
-                    // 指标 3: CPU/Memory
-                    float ratioDensityGap = Math.abs(queueItemVmType.getVmTypeRatioDensity() - server.getServerType().getServerTypeRatioDensity());
+            // 指标 3: CPU/Memory
+            float ratioDensityGap = Math.abs(queueItemVmType.getVmTypeRatioDensity() - server.getServerType().getServerTypeRatioDensity());
 
-                    // 指标 4, 5: hardwareCost, runningCost
-                    float ratioHardwareCost = (float)server.getServerType().getServerTypeHardwareCost();
-                    float ratioRunningCost = (float)server.getServerType().getServerTypeRunningCost();
+            // 指标 4, 5: hardwareCost, runningCost
+            float ratioHardwareCost = (float) server.getServerType().getServerTypeHardwareCost();
+            float ratioRunningCost = (float) server.getServerType().getServerTypeRunningCost();
 
-                    // 评价结果
-                    float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
+            // 评价结果
+            float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
 
-                    // 处理更优情况
-                    if (serverEvaluation < ref.bestServerEvaluation){
-                        ref.bestServerEvaluation = serverEvaluation;
-                        ref.bestServer = server;
-                        ref.bestDeployNode = deployNode;
-                    }
-                }
-        );
-
+            if (serverEvaluation < tempBestServerEvaluation) {
+                tempBestServerEvaluation = serverEvaluation;
+                tempBestServer = server;
+                tempBestDeployNode = deployNode;
+            }
+        }
 
         // 处理最优情况
-        this.handleBetterResult(queueItem, ref.bestServer, ref.bestDeployNode);
+        this.handleBetterResult(queueItem, tempBestServer, tempBestDeployNode);
     }
 
     // 处理最优情况
@@ -116,7 +109,7 @@ public class ScheduleAlgorithm {
         server.deployVm(queueItem.getQueueVm(), deployNode);
 
         // 判断是否需要新购买服务器
-        if(server.getServerId() == constant.SERVER_ID_VIRTUAL) {
+        if (server.getServerId() == constant.SERVER_ID_VIRTUAL) {
             // 标记为当天新购买的服务器
             int dailyServerId = constant.SERVER_ID_NEW_START - this.dailyNewServerCount;
             server.setServerId(dailyServerId);
@@ -142,39 +135,39 @@ public class ScheduleAlgorithm {
 
     // 评价算法
     // TODO: 复杂化
-    private float calculateServerEvaluation(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost){
+    private float calculateServerEvaluation(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost) {
         float serverEvaluation = ratioServerCpuNumLeft * 10 + ratioServerMemoryNumLeft * 10 + ratioDensityGap * 10 + ratioHardwareCost / 20000 + ratioRunningCost / 50;
         return serverEvaluation;
     }
 
-    private MultipleReturn calculateRatioCpuAndMemoryLeft(VmType queueItemVmType, Server server){
+    private MultipleReturn calculateRatioCpuAndMemoryLeft(VmType queueItemVmType, Server server) {
         int serverCpuNumLeft;
         int serverMemoryNumLeft;
         float ratioServerCpuNumLeft;
         float ratioServerMemoryNumLeft;
         String deployNode = null;
 
-        if (queueItemVmType.getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE){
-            if(server.getServerCpuNumLeftA() >= queueItemVmType.getVmTypeCpuNum() && server.getServerMemoryNumLeftA() >= queueItemVmType.getVmTypeMemoryNum()) {
+        if (queueItemVmType.getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE) {
+            if (server.getServerCpuNumLeftA() >= queueItemVmType.getVmTypeCpuNum() && server.getServerMemoryNumLeftA() >= queueItemVmType.getVmTypeMemoryNum()) {
                 serverCpuNumLeft = server.getServerCpuNumLeftA() - queueItemVmType.getVmTypeCpuNum();
                 serverMemoryNumLeft = server.getServerMemoryNumLeftA() - queueItemVmType.getVmTypeMemoryNum();
-                ratioServerCpuNumLeft = (float)serverCpuNumLeft / (float)(server.getServerType().getServerTypeCpuNum() / 2);
-                ratioServerMemoryNumLeft = (float)serverMemoryNumLeft / (float)(server.getServerType().getServerTypeMemoryNum() / 2);
+                ratioServerCpuNumLeft = (float) serverCpuNumLeft / (float) (server.getServerType().getServerTypeCpuNum() / 2);
+                ratioServerMemoryNumLeft = (float) serverMemoryNumLeft / (float) (server.getServerType().getServerTypeMemoryNum() / 2);
 
                 deployNode = constant.VM_NODE_A;
             } else {
                 serverCpuNumLeft = server.getServerCpuNumLeftB() - queueItemVmType.getVmTypeCpuNum();
                 serverMemoryNumLeft = server.getServerMemoryNumLeftB() - queueItemVmType.getVmTypeMemoryNum();
-                ratioServerCpuNumLeft = (float)serverCpuNumLeft / (float)(server.getServerType().getServerTypeCpuNum() / 2);
-                ratioServerMemoryNumLeft = (float)serverMemoryNumLeft / (float)(server.getServerType().getServerTypeMemoryNum() / 2);
+                ratioServerCpuNumLeft = (float) serverCpuNumLeft / (float) (server.getServerType().getServerTypeCpuNum() / 2);
+                ratioServerMemoryNumLeft = (float) serverMemoryNumLeft / (float) (server.getServerType().getServerTypeMemoryNum() / 2);
 
                 deployNode = constant.VM_NODE_B;
             }
         } else {
             serverCpuNumLeft = server.getServerCpuNumLeftA() + server.getServerCpuNumLeftA() - queueItemVmType.getVmTypeCpuNum();
             serverMemoryNumLeft = server.getServerMemoryNumLeftA() + server.getServerMemoryNumLeftB() - queueItemVmType.getVmTypeMemoryNum();
-            ratioServerCpuNumLeft = (float)serverCpuNumLeft / (float)server.getServerType().getServerTypeCpuNum();
-            ratioServerMemoryNumLeft = (float)serverMemoryNumLeft / (float)server.getServerType().getServerTypeMemoryNum();
+            ratioServerCpuNumLeft = (float) serverCpuNumLeft / (float) server.getServerType().getServerTypeCpuNum();
+            ratioServerMemoryNumLeft = (float) serverMemoryNumLeft / (float) server.getServerType().getServerTypeMemoryNum();
 
             deployNode = constant.VM_NODE_AB;
         }
@@ -183,13 +176,13 @@ public class ScheduleAlgorithm {
     }
 
     // 判断该服务器有无足够剩余空间
-    private boolean hasEnoughSpace(QueueItem queueItem, Server server){
-        if(queueItem.getQueueItemVmType().getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE){
-            if((server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || (server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum()) && server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum())){
+    private boolean hasEnoughSpace(QueueItem queueItem, Server server) {
+        if (queueItem.getQueueItemVmType().getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE) {
+            if ((server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || (server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum()) && server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum())) {
                 return false;
             }
         } else {
-            if (server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() / 2 || server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum() / 2 || server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum() / 2 || server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum()){
+            if (server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() / 2 || server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum() / 2 || server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum() / 2 || server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum()) {
                 return false;
             }
         }
@@ -198,13 +191,13 @@ public class ScheduleAlgorithm {
     }
 
     // 处理删除请求
-    private void processQueueItemDel(QueueItem queueItem){
+    private void processQueueItemDel(QueueItem queueItem) {
         int serverId = this.resourcePool.getVmServerMap().get(queueItem.getQueueItemVmId());
 
         // TODO: 可以优化，空间换时间维护 HashMap(serverId, Server)
         this.resourcePool.getServerList().forEach(
                 server -> {
-                    if(server.getServerId() == serverId){
+                    if (server.getServerId() == serverId) {
                         server.removeVm(queueItem.getQueueItemVmId());
                     }
                 }
@@ -215,7 +208,7 @@ public class ScheduleAlgorithm {
 
 
     // 处理周期的请求队列的前置操作
-    private void beforeProcessPeriodQueue(){
+    private void beforeProcessPeriodQueue() {
         this.trainingData.getServerTypeList().forEach(
                 serverType -> {
                     Server server = new Server(serverType);
@@ -225,14 +218,14 @@ public class ScheduleAlgorithm {
     }
 
     // 处理当天的请求队列的前置操作
-    private void beforeProcessDailyQueue(){
+    private void beforeProcessDailyQueue() {
         this.migrateVm();
         this.dailyNewServerCount = 0;
         this.dailyVmIdOnNewServer.clear();
     }
 
     // 处理当天的请求队列的后置操作
-    private void afterProcessDailyQueue(DailyQueue dailyQueue){
+    private void afterProcessDailyQueue(DailyQueue dailyQueue) {
         // 服务器类型 - 类型服务器数量
         HashMap<String, Integer> typeCountMap = new HashMap<>();
 
@@ -259,8 +252,8 @@ public class ScheduleAlgorithm {
         // 第一次循环，统计类型和数量
         this.resourcePool.getServerList().forEach(
                 server -> {
-                    if (server.getServerId() <= constant.SERVER_ID_NEW_START){
-                        if (typeCountMap.containsKey(server.getServerType().getServerTypeName())){
+                    if (server.getServerId() <= constant.SERVER_ID_NEW_START) {
+                        if (typeCountMap.containsKey(server.getServerType().getServerTypeName())) {
                             typeCountMap.put(server.getServerType().getServerTypeName(), typeCountMap.get(server.getServerType().getServerTypeName()) + 1);
                         } else {
                             typeCountMap.put(server.getServerType().getServerTypeName(), 1);
@@ -272,7 +265,7 @@ public class ScheduleAlgorithm {
         );
 
         int dailyServerCount = 0;
-        for(String typeName : typeCountMap.keySet()) {
+        for (String typeName : typeCountMap.keySet()) {
             typeStartMap.put(typeName, dailyServerCount + this.resourcePool.getRealServerCount());
             dailyServerCount += typeCountMap.get(typeName);
             typeOffsetMap.put(typeName, 0);
@@ -311,7 +304,7 @@ public class ScheduleAlgorithm {
         );
     }
 
-    private void migrateVm(){
+    private void migrateVm() {
 
     }
 }
