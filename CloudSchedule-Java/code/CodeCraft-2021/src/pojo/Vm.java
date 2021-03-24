@@ -5,6 +5,9 @@ public class Vm {
     private VmType vmType;
     private int vmId;
 
+    private int serverId;
+    private String deployNode;
+
     public Vm(VmType vmType, int vmId) {
         this.vmType = vmType;
         this.vmId = vmId;
@@ -28,5 +31,21 @@ public class Vm {
 
     public void setVmId(int vmId) {
         this.vmId = vmId;
+    }
+
+    public int getServerId() {
+        return serverId;
+    }
+
+    public void setServerId(int serverId) {
+        this.serverId = serverId;
+    }
+
+    public String getDeployNode() {
+        return deployNode;
+    }
+
+    public void setDeployNode(String deployNode) {
+        this.deployNode = deployNode;
     }
 }

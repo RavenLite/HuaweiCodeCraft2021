@@ -6,10 +6,13 @@ public class QueueItem {
     private VmType queueItemVmType;
     private int queueItemVmId;
 
+    private Vm queueVm;
+
     public QueueItem(String queueItemAction, VmType queueItemVmType, int queueItemVmId) {
         this.queueItemAction = queueItemAction;
         this.queueItemVmType = queueItemVmType;
         this.queueItemVmId = queueItemVmId;
+        this.queueVm = new Vm(queueItemVmType, queueItemVmId);
     }
 
 
@@ -24,11 +27,11 @@ public class QueueItem {
         this.queueItemAction = queueItemAction;
     }
 
-    public VmType getQueueItemVmtype() {
+    public VmType getQueueItemVmType() {
         return queueItemVmType;
     }
 
-    public void setQueueItemVmtype(VmType queueItemVmtype) {
+    public void setQueueItemVmType(VmType queueItemVmtype) {
         this.queueItemVmType = queueItemVmtype;
     }
 
@@ -38,5 +41,13 @@ public class QueueItem {
 
     public void setQueueItemVmId(int queueItemVmId) {
         this.queueItemVmId = queueItemVmId;
+    }
+
+    public Vm getQueueVm() {
+        return queueVm;
+    }
+
+    public void setQueueVm(Vm queueVm) {
+        this.queueVm = queueVm;
     }
 }

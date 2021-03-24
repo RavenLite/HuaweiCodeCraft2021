@@ -7,6 +7,7 @@ public class ServerType {
     private int serverTypeMemoryNum;
     private int serverTypeHardwareCost;
     private int serverTypeRunningCost;
+    private float serverTypeRatioDensity;
 
     public ServerType(String serverTypeName, int serverTypeCpuNum, int serverTypeMemoryNum, int serverTypeHardwareCost, int serverTypeRunningCost){
         this.serverTypeName = serverTypeName;
@@ -14,6 +15,8 @@ public class ServerType {
         this.serverTypeMemoryNum = serverTypeMemoryNum;
         this.serverTypeHardwareCost = serverTypeHardwareCost;
         this.serverTypeRunningCost = serverTypeRunningCost;
+
+        this.serverTypeRatioDensity = (float)serverTypeCpuNum / (float)serverTypeMemoryNum;
     }
 
 
@@ -58,5 +61,13 @@ public class ServerType {
 
     public void setServerTypeRunningCost(int serverTypeRunningCost) {
         this.serverTypeRunningCost = serverTypeRunningCost;
+    }
+
+    public float getServerTypeRatioDensity() {
+        return serverTypeRatioDensity;
+    }
+
+    public void setServerTypeRatioDensity(float serverTypeRatioDensity) {
+        this.serverTypeRatioDensity = serverTypeRatioDensity;
     }
 }

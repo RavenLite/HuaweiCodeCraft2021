@@ -1,6 +1,11 @@
 package pojo;
 
 
+import utils.Constant;
+
+import java.util.HashMap;
+
+
 public class Server {
     private int serverId;
     private ServerType serverType;
@@ -8,6 +13,10 @@ public class Server {
     private int serverCpuNumLeftB;
     private int serverMemoryNumLeftA;
     private int serverMemoryNumLeftB;
+
+    private HashMap<Integer, Vm> vmMap;
+
+    private static Constant constant;
 
     public Server(ServerType serverType){
         this.serverId = -1;
@@ -18,6 +27,24 @@ public class Server {
         this.serverMemoryNumLeftB = serverType.getServerTypeMemoryNum() / 2;
     }
 
+    public void deployVm(Vm vm, String deployNode){
+        if (vm.getVmType().getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE){
+            if(constant.VM_NODE_A.equals(deployNode)){
+                this.serverCpuNumLeftA -= vm.getVmType().getVmTypeCpuNum();
+                this.serverMemoryNumLeftA -= vm.getVmType().getVmTypeMemoryNum();
+            } else {
+                this.serverCpuNumLeftB -= vm.getVmType().getVmTypeCpuNum();
+                this.serverMemoryNumLeftB -= vm.getVmType().getVmTypeMemoryNum();
+            }
+        } else {
+            this.serverCpuNumLeftA -= vm.getVmType().getVmTypeCpuNum() / 2;
+            this.serverCpuNumLeftB -= vm.getVmType().getVmTypeCpuNum() / 2;
+            this.serverMemoryNumLeftA -= vm.getVmType().getVmTypeMemoryNum() / 2;
+            this.serverMemoryNumLeftB -= vm.getVmType().getVmTypeMemoryNum() / 2;
+        }
+
+        this.vmMap.put(vm.getVmId(), vm);
+    }
 
     /**
      * 下面是 getter 和 setter 方法，无需关注

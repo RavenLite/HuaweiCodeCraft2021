@@ -6,14 +6,15 @@ public class VmType {
     private int vmTypeCpuNum;
     private int vmTypeMemoryNum;
     private int vmTypeDeploymentWay;
-    private double vmTypeRatio;
+    private float vmTypeRatioDensity;
 
     public VmType(String vmTypeName, int vmTypeCpuNum, int vmTypeMemoryNum, int vmTypeDeploymentWay){
         this.vmTypeName = vmTypeName;
         this.vmTypeCpuNum = vmTypeCpuNum;
         this.vmTypeMemoryNum = vmTypeMemoryNum;
         this.vmTypeDeploymentWay = vmTypeDeploymentWay;
-        this.vmTypeRatio = vmTypeCpuNum / vmTypeMemoryNum;
+
+        this.vmTypeRatioDensity = (float)vmTypeCpuNum / (float)vmTypeMemoryNum;
     }
 
 
@@ -52,11 +53,11 @@ public class VmType {
         this.vmTypeDeploymentWay = vmTypeDeploymentWay;
     }
 
-    public double getVmTypeRatio() {
-        return vmTypeRatio;
+    public float getVmTypeRatioDensity() {
+        return vmTypeRatioDensity;
     }
 
-    public void setVmTypeRatio(double vmTypeRatio) {
-        this.vmTypeRatio = vmTypeRatio;
+    public void setVmTypeRatioDensity(float vmTypeRatioDensity) {
+        this.vmTypeRatioDensity = vmTypeRatioDensity;
     }
 }

@@ -12,7 +12,8 @@ public class ResourcePool {
     private ArrayList<Vm> vmList;
 
     public void buyServer(Server server){
-        this.serverList.add(server);
+        // 增加虚拟服务器
+        this.serverList.add(new Server(server.getServerType()));
     }
 
     public ArrayList<Server> getServerList() {
