@@ -12,7 +12,6 @@ public class QueueItem {
         this.queueItemAction = queueItemAction;
         this.queueItemVmType = queueItemVmType;
         this.queueItemVmId = queueItemVmId;
-        this.queueVm = new Vm(queueItemVmType, queueItemVmId);
     }
 
 

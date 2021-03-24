@@ -64,6 +64,8 @@ public class ScheduleAlgorithm {
     // 处理添加请求
     private void processQueueItemAdd(QueueItem queueItem){
         VmType queueItemVmType = queueItem.getQueueItemVmType();
+        Vm createdVm = this.resourcePool.createVm(queueItem.getQueueItemVmId(), queueItem.getQueueItemVmType());
+        queueItem.setQueueVm(createdVm);
 
         // 临时最优变量
         var ref = new Object() {
@@ -127,6 +129,9 @@ public class ScheduleAlgorithm {
             this.dailyNewServerCount++;
             this.dailyVmIdOnNewServer.add(queueItem.getQueueItemVmId());
         } else {
+            if (server.getServerId() <= constant.SERVER_ID_NEW_START) {
+                this.dailyVmIdOnNewServer.add(queueItem.getQueueItemVmId());
+            }
             queueItem.getQueueVm().setServerId(server.getServerId());
             queueItem.getQueueVm().setDeployNode(deployNode);
         }
@@ -201,6 +206,8 @@ public class ScheduleAlgorithm {
                     }
                 }
         );
+
+        this.resourcePool.freeVm(queueItem.getQueueItemVmId());
     }
 
 
@@ -292,7 +299,9 @@ public class ScheduleAlgorithm {
     private void updateVmServerId(HashMap<Integer, Integer> oldNewServerIdMap) {
         this.dailyVmIdOnNewServer.forEach(
                 vmId -> {
-                    this.resourcePool.getVmServerMap().put(vmId, oldNewServerIdMap.get(this.resourcePool.getVmServerMap().get(vmId)));
+                    int oldServerId = this.resourcePool.getVmServerMap().get(vmId);
+                    this.resourcePool.getVmServerMap().put(vmId, oldNewServerIdMap.get(oldServerId));
+                    this.resourcePool.getVmMap().get(vmId).setServerId(oldNewServerIdMap.get(oldServerId));
                 }
         );
     }

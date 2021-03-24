@@ -121,4 +121,12 @@ public class Server {
     public void setServerMemoryNumLeftB(int serverMemoryNumLeftB) {
         this.serverMemoryNumLeftB = serverMemoryNumLeftB;
     }
+
+    public HashMap<Integer, Vm> getVmMap() {
+        return vmMap;
+    }
+
+    public void setVmMap(HashMap<Integer, Vm> vmMap) {
+        this.vmMap = vmMap;
+    }
 }
