@@ -46,6 +46,27 @@ public class Server {
         this.vmMap.put(vm.getVmId(), vm);
     }
 
+    public void removeVm(int vmId){
+        Vm vm = vmMap.get(vmId);
+
+        if (vm.getVmType().getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE){
+            if (constant.VM_NODE_A.equals(vm.getDeployNode())){
+                this.serverCpuNumLeftA += vm.getVmType().getVmTypeCpuNum();
+                this.serverMemoryNumLeftA += vm.getVmType().getVmTypeMemoryNum();
+            } else {
+                this.serverCpuNumLeftB += vm.getVmType().getVmTypeCpuNum();
+                this.serverMemoryNumLeftB += vm.getVmType().getVmTypeMemoryNum();
+            }
+        } else {
+            this.serverCpuNumLeftA += vm.getVmType().getVmTypeCpuNum() / 2;
+            this.serverCpuNumLeftB += vm.getVmType().getVmTypeCpuNum() / 2;
+            this.serverMemoryNumLeftA += vm.getVmType().getVmTypeMemoryNum() / 2;
+            this.serverMemoryNumLeftB += vm.getVmType().getVmTypeMemoryNum() / 2;
+        }
+
+        this.vmMap.remove(vmId);
+    }
+
     /**
      * 下面是 getter 和 setter 方法，无需关注
      */

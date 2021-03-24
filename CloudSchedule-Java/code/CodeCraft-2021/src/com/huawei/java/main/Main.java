@@ -1,5 +1,7 @@
 package com.huawei.java.main;
 
+import algorithm.ResourcePool;
+import algorithm.ScheduleAlgorithm;
 import pojo.*;
 
 import java.io.BufferedReader;
@@ -17,7 +19,7 @@ public class Main {
     public static TrainingData get_training_data() {
         try {
             // 构建文件读取器
-            BufferedReader in = new BufferedReader(new FileReader("./CloudSchedule/training_data/training-1.txt"));
+            BufferedReader in = new BufferedReader(new FileReader("./CloudSchedule/training_data/training-3.txt"));
 
             // 读取 server_type_num 及 server_type_list
             int server_type_num = Integer.parseInt(in.readLine());
@@ -120,5 +122,6 @@ public class Main {
         // TODO: process
         // TODO: write standard output
         // TODO: System.out.flush()
+        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
     }
 }
