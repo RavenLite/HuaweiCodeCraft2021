@@ -48,11 +48,6 @@ public class Server {
 
     public void removeVm(int vmId){
         Vm vm = vmMap.get(vmId);
-//        System.out.println(vmId);
-//        System.out.println(vm);
-//        System.out.println(vm.getVmType());
-//        System.out.println(vm.getVmType().getVmTypeDeploymentWay());
-//        System.out.println(constant.VM_DEPLOYMENT_SINGLE);
         if (vm.getVmType().getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE){
             if (constant.VM_NODE_A.equals(vm.getDeployNode())){
                 this.serverCpuNumLeftA += vm.getVmType().getVmTypeCpuNum();

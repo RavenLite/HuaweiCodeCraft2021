@@ -33,8 +33,8 @@ public class ScheduleAlgorithm {
         this.trainingData.getDailyQueueList().forEach(
                 dailyQueue -> {
                     // 命令行提示
-                    String str = String.format("Running: %d/%d, ServerCount: %d", this.trainingData.getDailyQueueList().indexOf(dailyQueue) + 1, this.trainingData.getDailyQueueNum(), this.resourcePool.getServerList().size());
-                    System.out.println(str);
+//                    String str = String.format("Running: %d/%d, ServerCount: %d, DailyQueueSize: %d", this.trainingData.getDailyQueueList().indexOf(dailyQueue) + 1, this.trainingData.getDailyQueueNum(), this.resourcePool.getServerList().size(), dailyQueue.getQueueItemList().size());
+//                    System.out.println(str);
 
                     this.processDailyQueue(dailyQueue);
                 }
@@ -106,6 +106,7 @@ public class ScheduleAlgorithm {
                 }
         );
 
+
         // 处理最优情况
         this.handleBetterResult(queueItem, ref.bestServer, ref.bestDeployNode);
     }
@@ -154,7 +155,7 @@ public class ScheduleAlgorithm {
         String deployNode = null;
 
         if (queueItemVmType.getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE){
-            if(server.getServerCpuNumLeftA() < queueItemVmType.getVmTypeCpuNum() && server.getServerMemoryNumLeftA() < queueItemVmType.getVmTypeMemoryNum()) {
+            if(server.getServerCpuNumLeftA() >= queueItemVmType.getVmTypeCpuNum() && server.getServerMemoryNumLeftA() >= queueItemVmType.getVmTypeMemoryNum()) {
                 serverCpuNumLeft = server.getServerCpuNumLeftA() - queueItemVmType.getVmTypeCpuNum();
                 serverMemoryNumLeft = server.getServerMemoryNumLeftA() - queueItemVmType.getVmTypeMemoryNum();
                 ratioServerCpuNumLeft = (float)serverCpuNumLeft / (float)(server.getServerType().getServerTypeCpuNum() / 2);
@@ -174,6 +175,8 @@ public class ScheduleAlgorithm {
             serverMemoryNumLeft = server.getServerMemoryNumLeftA() + server.getServerMemoryNumLeftB() - queueItemVmType.getVmTypeMemoryNum();
             ratioServerCpuNumLeft = (float)serverCpuNumLeft / (float)server.getServerType().getServerTypeCpuNum();
             ratioServerMemoryNumLeft = (float)serverMemoryNumLeft / (float)server.getServerType().getServerTypeMemoryNum();
+
+            deployNode = constant.VM_NODE_AB;
         }
 
         return new MultipleReturn(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, deployNode);
@@ -182,7 +185,7 @@ public class ScheduleAlgorithm {
     // 判断该服务器有无足够剩余空间
     private boolean hasEnoughSpace(QueueItem queueItem, Server server){
         if(queueItem.getQueueItemVmType().getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE){
-            if((server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() && server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum()) || (server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum() && server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum())){
+            if((server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || (server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum()) && server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum())){
                 return false;
             }
         } else {
@@ -292,6 +295,8 @@ public class ScheduleAlgorithm {
                 }
         );
 
+        // 更新真实服务器数量
+        this.resourcePool.setRealServerCount(this.resourcePool.getRealServerCount() + dailyNewServerCount);
         return oldNewServerIdMap;
     }
 

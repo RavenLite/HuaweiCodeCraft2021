@@ -3,6 +3,7 @@ package com.huawei.java.main;
 import algorithm.ResourcePool;
 import algorithm.ScheduleAlgorithm;
 import pojo.*;
+import utils.Read;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -19,7 +20,7 @@ public class Main {
     public static TrainingData get_training_data() {
         try {
             // 构建文件读取器
-            BufferedReader in = new BufferedReader(new FileReader("./training_data/training-3.txt"));
+            BufferedReader in = new BufferedReader(new FileReader("./training_data/training-1.txt"));
 
             // 读取 server_type_num 及 server_type_list
             int server_type_num = Integer.parseInt(in.readLine());
@@ -123,5 +124,6 @@ public class Main {
         // TODO: write standard Output
         // TODO: System.out.flush()
         new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
+//        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
     }
 }
