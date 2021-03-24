@@ -13,10 +13,10 @@ public class ScheduleAlgorithm {
     private ResourcePool resourcePool;
 
     private int dailyNewServerCount;
-    private static Constant constant;
+    private static Constant constant = new Constant();
 
     // 记录了当天购买了新服务器的虚拟机 ID
-    private ArrayList<Integer> dailyVmIdOnNewServer;
+    private ArrayList<Integer> dailyVmIdOnNewServer = new ArrayList<>();
 
     public ScheduleAlgorithm(TrainingData trainingData, ResourcePool resourcePool) {
         this.trainingData = trainingData;
@@ -32,7 +32,7 @@ public class ScheduleAlgorithm {
         this.trainingData.getDailyQueueList().forEach(
                 dailyQueue -> {
                     // 命令行提示
-                    String str = String.format("Running: %d/%d, ServerCount: %d", this.trainingData.getDailyQueueList().indexOf(dailyQueue), this.trainingData.getDailyQueueNum(), this.resourcePool.getServerList().size());
+                    String str = String.format("Running: %d/%d, ServerCount: %d", this.trainingData.getDailyQueueList().indexOf(dailyQueue) + 1, this.trainingData.getDailyQueueNum(), this.resourcePool.getServerList().size());
                     System.out.println(str);
 
                     this.processDailyQueue(dailyQueue);
@@ -217,7 +217,7 @@ public class ScheduleAlgorithm {
     private void beforeProcessDailyQueue(){
         this.migrateVm();
         this.dailyNewServerCount = 0;
-        this.dailyVmIdOnNewServer = null;
+        this.dailyVmIdOnNewServer.clear();
     }
 
     // 处理当天的请求队列的后置操作
@@ -230,17 +230,17 @@ public class ScheduleAlgorithm {
     // 分配服务器ID
     private HashMap<Integer, Integer> arrangeServerId() {
         // 服务器类型 - 类型服务器数量
-        HashMap<String, Integer> typeCountMap = null;
+        HashMap<String, Integer> typeCountMap = new HashMap<>();
         // 服务器类型 - 类型服务器 id 起点
-        HashMap<String, Integer> typeStartMap = null;
+        HashMap<String, Integer> typeStartMap = new HashMap<>();
         // 服务器类型 - 类型服务器 offset 偏移
-        HashMap<String, Integer> typeOffsetMap = null;
+        HashMap<String, Integer> typeOffsetMap = new HashMap<>();
 
         // 新服务器类型集合
-        ArrayList<String> typeList = null;
+        ArrayList<String> typeList = new ArrayList<>();
 
         // 新旧服务器 id 映射
-        HashMap<Integer, Integer> oldNewServerIdMap = null;
+        HashMap<Integer, Integer> oldNewServerIdMap = new HashMap<>();
 
 
         // 第一次循环，统计类型和数量
