@@ -7,6 +7,7 @@ import utils.Output;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 
 public class ScheduleAlgorithm {
@@ -67,48 +68,41 @@ public class ScheduleAlgorithm {
         Vm createdVm = this.resourcePool.createVm(queueItem.getQueueItemVmId(), queueItem.getQueueItemVmType());
         queueItem.setQueueVm(createdVm);
 
-        // 临时最优变量
-        var ref = new Object() {
-            float bestServerEvaluation = constant.MIN_VALUE_INITIAL;
-            Server bestServer;
-            String bestDeployNode;
-        };
+        float tempBestServerEvaluation = constant.MIN_VALUE_INITIAL;
+        Server tempBestServer = new Server();
+        String tempBestDeployNode = null;
 
-        this.resourcePool.getServerList().forEach(
-                server -> {
-                    // 判断该服务器剩余空间是否满足条件
-                    if(!this.hasEnoughSpace(queueItem, server)){
-                        return;
-                    }
+        for (Server server : this.resourcePool.getServerList()) {
+            // 判断该服务器剩余空间是否满足条件
+            if (!this.hasEnoughSpace(queueItem, server)) {
+                continue;
+            }
 
-                    // 指标 1, 2: CPU, Memory
-                    MultipleReturn ratioCpuAndMemoryLeft = this.calculateRatioCpuAndMemoryLeft(queueItemVmType, server);
-                    float ratioServerCpuNumLeft = ratioCpuAndMemoryLeft.getFirst();
-                    float ratioServerMemoryNumLeft = ratioCpuAndMemoryLeft.getSecond();
-                    String deployNode = ratioCpuAndMemoryLeft.getThird();
+            // 指标 1, 2: CPU, Memory
+            MultipleReturn ratioCpuAndMemoryLeft = this.calculateRatioCpuAndMemoryLeft(queueItemVmType, server);
+            float ratioServerCpuNumLeft = ratioCpuAndMemoryLeft.getFirst();
+            float ratioServerMemoryNumLeft = ratioCpuAndMemoryLeft.getSecond();
+            String deployNode = ratioCpuAndMemoryLeft.getThird();
 
-                    // 指标 3: CPU/Memory
-                    float ratioDensityGap = Math.abs(queueItemVmType.getVmTypeRatioDensity() - server.getServerType().getServerTypeRatioDensity());
+            // 指标 3: CPU/Memory
+            float ratioDensityGap = Math.abs(queueItemVmType.getVmTypeRatioDensity() - server.getServerType().getServerTypeRatioDensity());
 
-                    // 指标 4, 5: hardwareCost, runningCost
-                    float ratioHardwareCost = (float)server.getServerType().getServerTypeHardwareCost();
-                    float ratioRunningCost = (float)server.getServerType().getServerTypeRunningCost();
+            // 指标 4, 5: hardwareCost, runningCost
+            float ratioHardwareCost = (float) server.getServerType().getServerTypeHardwareCost();
+            float ratioRunningCost = (float) server.getServerType().getServerTypeRunningCost();
 
-                    // 评价结果
-                    float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
+            // 评价结果
+            float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
 
-                    // 处理更优情况
-                    if (serverEvaluation < ref.bestServerEvaluation){
-                        ref.bestServerEvaluation = serverEvaluation;
-                        ref.bestServer = server;
-                        ref.bestDeployNode = deployNode;
-                    }
-                }
-        );
-
+            if (serverEvaluation < tempBestServerEvaluation) {
+                tempBestServerEvaluation = serverEvaluation;
+                tempBestServer = server;
+                tempBestDeployNode = deployNode;
+            }
+        }
 
         // 处理最优情况
-        this.handleBetterResult(queueItem, ref.bestServer, ref.bestDeployNode);
+        this.handleBetterResult(queueItem, tempBestServer, tempBestDeployNode);
     }
 
     // 处理最优情况
