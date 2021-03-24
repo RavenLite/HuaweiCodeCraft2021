@@ -17,7 +17,7 @@ public class Main {
     public static TrainingData get_training_data() {
         try {
             // 构建文件读取器
-            BufferedReader in = new BufferedReader(new FileReader("./CloudSchedule-Java/training_data/training-1.txt"));
+            BufferedReader in = new BufferedReader(new FileReader("./training_data/training-3.txt"));
 
             // 读取 server_type_num 及 server_type_list
             int server_type_num = Integer.parseInt(in.readLine());
@@ -105,9 +105,9 @@ public class Main {
      */
     public static void test(ArrayList<ServerType> server_type_list, ArrayList<VmType> vm_type_list,
                             ArrayList<DailyQueue> daily_queue_list) {
-        System.out.println(server_type_list.size());
-        System.out.println(vm_type_list.size());
-        System.out.println(daily_queue_list.size());
+//        System.out.println(server_type_list.size());
+//        System.out.println(vm_type_list.size());
+//        System.out.println(daily_queue_list.size());
     }
 
     /**

@@ -9,10 +9,10 @@ import java.util.HashMap;
 
 
 public class ResourcePool {
-    private ArrayList<Server> serverList;
-    private ArrayList<Vm> vmList;
+    private ArrayList<Server> serverList = new ArrayList<>();
+    private ArrayList<Vm> vmList = new ArrayList<>();
 
-    private HashMap<Integer, Integer> vmServerMap;
+    private HashMap<Integer, Integer> vmServerMap = new HashMap<>();
 
     private int realServerCount;
 
