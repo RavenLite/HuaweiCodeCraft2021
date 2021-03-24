@@ -12,14 +12,14 @@ public class Output {
 
     private static final Constant constant = new Constant();
 
-    public void output_daily(int purchase_server_num, HashMap<ServerType, Integer> purchase_server_list,
+    public static void output_daily(int purchase_server_num, HashMap<String, Integer> purchase_server_list,
                              int migrate_vm_num, HashMap<Vm, Server> migrate_vm_list,
                              DailyQueue daily_queue_list) {
 
         // 输出购买
         System.out.printf("(purchase, %d)%n", purchase_server_num);
-        for (Map.Entry<ServerType, Integer> entry : purchase_server_list.entrySet()) {
-            System.out.printf("(%s, %d)%n", entry.getKey().getServerTypeName(), entry.getValue());
+        for (Map.Entry<String, Integer> entry : purchase_server_list.entrySet()) {
+            System.out.printf("(%s, %d)%n", entry.getKey(), entry.getValue());
         }
 
         // 输出迁移

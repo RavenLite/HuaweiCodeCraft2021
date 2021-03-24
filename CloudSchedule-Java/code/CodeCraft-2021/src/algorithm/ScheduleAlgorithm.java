@@ -3,6 +3,7 @@ package algorithm;
 import pojo.*;
 import utils.Constant;
 import utils.MultipleReturn;
+import utils.Output;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public class ScheduleAlgorithm {
                 this::processQueueItem
         );
 
-        this.afterProcessDailyQueue();
+        this.afterProcessDailyQueue(dailyQueue);
     }
 
     // 处理当天的每一条请求
@@ -221,16 +222,18 @@ public class ScheduleAlgorithm {
     }
 
     // 处理当天的请求队列的后置操作
-    private void afterProcessDailyQueue(){
+    private void afterProcessDailyQueue(DailyQueue dailyQueue){
+        // 服务器类型 - 类型服务器数量
+        HashMap<String, Integer> typeCountMap = new HashMap<>();
+
         // 分配服务器ID
-        HashMap<Integer, Integer> oldNewServerIdMap = this.arrangeServerId();
+        HashMap<Integer, Integer> oldNewServerIdMap = this.arrangeServerId(typeCountMap);
         this.updateVmServerId(oldNewServerIdMap);
+        Output.output_daily(this.dailyNewServerCount, typeCountMap, 0, new HashMap<>(), dailyQueue);
     }
 
     // 分配服务器ID
-    private HashMap<Integer, Integer> arrangeServerId() {
-        // 服务器类型 - 类型服务器数量
-        HashMap<String, Integer> typeCountMap = new HashMap<>();
+    private HashMap<Integer, Integer> arrangeServerId(HashMap<String, Integer> typeCountMap) {
         // 服务器类型 - 类型服务器 id 起点
         HashMap<String, Integer> typeStartMap = new HashMap<>();
         // 服务器类型 - 类型服务器 offset 偏移

@@ -1,5 +1,7 @@
 package com.huawei.java.main;
 
+import algorithm.ResourcePool;
+import algorithm.ScheduleAlgorithm;
 import pojo.*;
 
 import java.io.BufferedReader;
@@ -120,6 +122,6 @@ public class Main {
         // TODO: process
         // TODO: write standard Output
         // TODO: System.out.flush()
-        TrainingData td = get_training_data();
+        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
     }
 }
