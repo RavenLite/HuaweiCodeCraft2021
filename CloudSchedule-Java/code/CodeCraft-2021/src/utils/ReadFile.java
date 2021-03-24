@@ -1,23 +1,22 @@
-package com.huawei.java.main;
+package utils;
 
 import pojo.*;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Main {
+public class ReadFile {
     /**
      * 获取 training_data
      * @return training_data
      */
-    public static TrainingData get_training_data() {
+    public TrainingData get_training_data() {
         try {
             // 构建文件读取器
-            BufferedReader in = new BufferedReader(new FileReader("./CloudSchedule-Java/training_data/training-1.txt"));
+            BufferedReader in = new BufferedReader(new FileReader("./CloudSchedule/training_data/training-1.txt"));
 
             // 读取 server_type_num 及 server_type_list
             int server_type_num = Integer.parseInt(in.readLine());
@@ -108,18 +107,5 @@ public class Main {
         System.out.println(server_type_list.size());
         System.out.println(vm_type_list.size());
         System.out.println(daily_queue_list.size());
-    }
-
-    /**
-     * 主类
-     * @param args 参数
-     * @throws FileNotFoundException 缺少文件报错
-     */
-    public static void main(String[] args) throws FileNotFoundException {
-        // TODO: Read standard input
-        // TODO: process
-        // TODO: write standard Output
-        // TODO: System.out.flush()
-        TrainingData td = get_training_data();
     }
 }
