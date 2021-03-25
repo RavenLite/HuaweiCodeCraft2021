@@ -6,6 +6,7 @@ import utils.MultipleReturn;
 import utils.Output;
 import utils.OutputFile;
 
+import javax.print.attribute.standard.Severity;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ public class ScheduleAlgorithm {
 
     // 记录了当天购买了新服务器的虚拟机 ID
     private ArrayList<Integer> dailyVmIdOnNewServer = new ArrayList<>();
+    private ArrayList<MigrationItem> dailyMigrationList = new ArrayList<>();
 
     public ScheduleAlgorithm(TrainingData trainingData, ResourcePool resourcePool) {
         this.trainingData = trainingData;
@@ -75,7 +77,7 @@ public class ScheduleAlgorithm {
 
         for (Server server : this.resourcePool.getServerList()) {
             // 判断该服务器剩余空间是否满足条件
-            if (!this.hasEnoughSpace(queueItem, server)) {
+            if (!this.hasEnoughSpace(queueItem.getQueueItemVmType(), server)) {
                 continue;
             }
 
@@ -178,13 +180,14 @@ public class ScheduleAlgorithm {
     }
 
     // 判断该服务器有无足够剩余空间
-    private boolean hasEnoughSpace(QueueItem queueItem, Server server) {
-        if (queueItem.getQueueItemVmType().getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE) {
-            if ((server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || (server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum()) && server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum() || server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum())) {
+    private boolean hasEnoughSpace(VmType vmType, Server server) {
+
+        if (vmType.getVmTypeDeploymentWay() == constant.VM_DEPLOYMENT_SINGLE) {
+            if ((server.getServerCpuNumLeftA() < vmType.getVmTypeCpuNum() || (server.getServerMemoryNumLeftA() < vmType.getVmTypeMemoryNum()) && server.getServerCpuNumLeftB() < vmType.getVmTypeCpuNum() || server.getServerMemoryNumLeftB() < vmType.getVmTypeMemoryNum())) {
                 return false;
             }
         } else {
-            if (server.getServerCpuNumLeftA() < queueItem.getQueueItemVmType().getVmTypeCpuNum() / 2 || server.getServerCpuNumLeftB() < queueItem.getQueueItemVmType().getVmTypeCpuNum() / 2 || server.getServerMemoryNumLeftA() < queueItem.getQueueItemVmType().getVmTypeMemoryNum() / 2 || server.getServerMemoryNumLeftB() < queueItem.getQueueItemVmType().getVmTypeMemoryNum()) {
+            if (server.getServerCpuNumLeftA() < vmType.getVmTypeCpuNum() / 2 || server.getServerCpuNumLeftB() < vmType.getVmTypeCpuNum() / 2 || server.getServerMemoryNumLeftA() < vmType.getVmTypeMemoryNum() / 2 || server.getServerMemoryNumLeftB() < vmType.getVmTypeMemoryNum()) {
                 return false;
             }
         }
@@ -236,9 +239,11 @@ public class ScheduleAlgorithm {
         this.updateVmServerId(oldNewServerIdMap);
 
         // 提交请使用此行
-        Output.output_daily(typeCountMap.size(), typeCountMap, 0, new HashMap<>(), dailyQueue);
+//        System.out.println(this.dailyMigrationList.size());
+        Output.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
         // 测试请使用此行
-//        OutputFile.output_daily(typeCountMap.size(), typeCountMap, 0, new HashMap<>(), dailyQueue);
+//        OutputFile.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
+        this.dailyMigrationList.clear();
     }
 
     // 分配服务器ID
@@ -311,6 +316,72 @@ public class ScheduleAlgorithm {
     }
 
     private void migrateVm() {
+        int vmCount = this.resourcePool.getVmMap().size();
+        int maxMigrationNum = 5 * vmCount / 1000;
+        int migrationNum = 0;
 
+        for (int vmId : this.resourcePool.getVmMap().keySet()) {
+            Vm vm = this.resourcePool.getVmMap().get(vmId);
+            int originServerId = vm.getServerId();
+            Server originServer = new Server();
+
+            float tempBestServerEvaluation = constant.MIN_VALUE_INITIAL;
+            Server tempBestServer = new Server();
+            String tempBestDeployNode = null;
+
+            for (Server server : this.resourcePool.getServerList()) {
+                // 找到原始 server
+                if (server.getServerId() == originServerId) {
+                    originServer = server;
+                }
+                // 不考虑虚拟服务器
+                if (server.getServerId() < 0) {
+                    continue;
+                }
+
+                // 判断该服务器剩余空间是否满足条件
+                if (!this.hasEnoughSpace(vm.getVmType(), server)) {
+                    continue;
+                }
+
+                // 指标 1, 2: CPU, Memory
+                MultipleReturn ratioCpuAndMemoryLeft = this.calculateRatioCpuAndMemoryLeft(vm.getVmType(), server);
+                float ratioServerCpuNumLeft = ratioCpuAndMemoryLeft.getFirst();
+                float ratioServerMemoryNumLeft = ratioCpuAndMemoryLeft.getSecond();
+                String deployNode = ratioCpuAndMemoryLeft.getThird();
+
+                // 指标 3: CPU/Memory
+                float ratioDensityGap = Math.abs(vm.getVmType().getVmTypeRatioDensity() - server.getServerType().getServerTypeRatioDensity());
+
+                // 指标 4, 5: hardwareCost, runningCost
+                float ratioHardwareCost = (float) server.getServerType().getServerTypeHardwareCost();
+                float ratioRunningCost = (float) server.getServerType().getServerTypeRunningCost();
+
+                // 评价结果
+                float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
+
+                if (serverEvaluation < tempBestServerEvaluation) {
+                    tempBestServerEvaluation = serverEvaluation;
+                    tempBestServer = server;
+                    tempBestDeployNode = deployNode;
+                }
+            }
+
+            if (originServerId != tempBestServer.getServerId() && tempBestServer.getServerId() > 0) {
+                originServer.removeVm(vmId);
+                vm.setServerId(tempBestServer.getServerId());
+                vm.setDeployNode(tempBestDeployNode);
+                tempBestServer.deployVm(vm, tempBestDeployNode);
+                this.resourcePool.getVmServerMap().put(vmId, tempBestServer.getServerId());
+                migrationNum++;
+                this.dailyMigrationList.add(new MigrationItem(vmId, tempBestServer.getServerId(), tempBestDeployNode));
+            }
+
+
+            // 超过最大迁移数量，直接退出
+            if (migrationNum >= maxMigrationNum) {
+                return;
+            }
+        }
     }
 }

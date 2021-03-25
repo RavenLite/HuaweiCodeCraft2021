@@ -12,11 +12,11 @@ import java.util.HashMap;
 public class ResourcePool {
     // 服务器列表
     private ArrayList<Server> serverList = new ArrayList<>();
-    // 虚拟机 map
+    // 虚拟机 map | vm_id --> vm
     private HashMap<Integer, Vm> vmMap = new HashMap<>();
-
+    // 虚拟机所属服务器 map | vm_id --> server_id
     private HashMap<Integer, Integer> vmServerMap = new HashMap<>();
-
+    // 真实服务器的数量
     private int realServerCount;
 
     public ResourcePool() {

@@ -2,6 +2,7 @@ package utils;
 
 import pojo.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ public class Output {
     private static final Constant constant = new Constant();
 
     public static void output_daily(int purchase_server_num, HashMap<String, Integer> purchase_server_list,
-                             int migrate_vm_num, HashMap<Vm, Server> migrate_vm_list,
+                             int migrate_vm_num, ArrayList<MigrationItem> dailyMigrationList,
                              DailyQueue daily_queue_list) {
 
         // 输出购买
@@ -23,10 +24,14 @@ public class Output {
         }
 
         // 输出迁移
-        System.out.printf("(migration, %d)%n", migrate_vm_num);
-//        for (Map.Entry<Vm, Server> entry : migrate_vm_list) {
-//            System.out.printf("");
-//        }
+        System.out.printf("(migration, %d)%n", dailyMigrationList.size());
+        for (MigrationItem migrationItem : dailyMigrationList) {
+            if (migrationItem.getDeploymentNode().equals(constant.VM_NODE_AB)){
+                System.out.printf(String.format("(%d, %d)%n", migrationItem.getVmId(), migrationItem.getServerId()));
+            } else {
+                System.out.printf(String.format("(%d, %d, %s)%n", migrationItem.getVmId(), migrationItem.getServerId(), migrationItem.getDeploymentNode()));
+            }
+        }
 
         // 输出部署服务器
         for (QueueItem queue_item : daily_queue_list.getQueueItemList()) {

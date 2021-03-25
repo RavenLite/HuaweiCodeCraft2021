@@ -127,10 +127,10 @@ public class Main {
 //        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
 
         // 提交时请使用此行，同时请调整 ScheduleAlgorithm.java 的输出部分
-        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
+//        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
 
         // 测试时请使用此行，同时请调整 ScheduleAlgorithm.java 的输出部分
-//        new ScheduleAlgorithm(new ReadFile().get_training_data(), new ResourcePool()).processPeriodQueue();
+        new ScheduleAlgorithm(new ReadFile().get_training_data(), new ResourcePool()).processPeriodQueue();
         System.out.flush();
     }
 }

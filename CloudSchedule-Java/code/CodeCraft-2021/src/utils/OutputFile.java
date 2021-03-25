@@ -1,11 +1,9 @@
 package utils;
 
-import pojo.DailyQueue;
-import pojo.QueueItem;
-import pojo.Server;
-import pojo.Vm;
+import pojo.*;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +16,7 @@ public class OutputFile {
 //    private static int day = 0;
 
     public static void output_daily(int purchase_server_type_num, HashMap<String, Integer> purchase_server_list,
-                             int migrate_vm_num, HashMap<Vm, Server> migrate_vm_list,
+                             int migrate_vm_num, ArrayList<MigrationItem> dailyMigrationList,
                              DailyQueue daily_queue_list) {
 
         try {
@@ -41,10 +39,13 @@ public class OutputFile {
 
             // 输出迁移
             out.write(String.format("(migration, %d)%n", migrate_vm_num));
-//            System.out.printf("(migration, %d)%n", migrate_vm_num);
-    //        for (Map.Entry<Vm, Server> entry : migrate_vm_list) {
-    //            System.out.printf("");
-    //        }
+            for (MigrationItem migrationItem : dailyMigrationList) {
+                if (migrationItem.getDeploymentNode().equals(constant.VM_NODE_AB)){
+                    out.write(String.format("(%d, %d)%n", migrationItem.getVmId(), migrationItem.getServerId()));
+                } else {
+                    out.write(String.format("(%d, %d, %s)%n", migrationItem.getVmId(), migrationItem.getServerId(), migrationItem.getDeploymentNode()));
+                }
+            }
 
             // 输出部署服务器
             for (QueueItem queue_item : daily_queue_list.getQueueItemList()) {
