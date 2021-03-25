@@ -240,9 +240,9 @@ public class ScheduleAlgorithm {
 
         // 提交请使用此行
 //        System.out.println(this.dailyMigrationList.size());
-        Output.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
+//        Output.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
         // 测试请使用此行
-//        OutputFile.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
+        OutputFile.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
         this.dailyMigrationList.clear();
     }
 
