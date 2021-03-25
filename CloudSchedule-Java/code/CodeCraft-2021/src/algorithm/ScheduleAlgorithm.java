@@ -238,7 +238,9 @@ public class ScheduleAlgorithm {
 
     // 处理当天的请求队列的前置操作
     private void beforeProcessDailyQueue() {
-        this.migrateVm();
+        if (constant.NEED_MIGRATION) {
+            this.migrateVm();
+        }
         this.dailyNewServerCount = 0;
         this.dailyVmIdOnNewServer.clear();
     }

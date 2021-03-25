@@ -38,4 +38,7 @@ public class Constant {
     public float WEIGHT_DENSITY_GAP_MIGRATION = 0;
     public float WEIGHT_HARDWARE_COST_MIGRATION = 0;
     public float WEIGHT_RUNNING_COST_MIGRATION = 0;
+
+    // switch
+    public boolean NEED_MIGRATION = true;
 }
