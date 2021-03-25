@@ -123,8 +123,8 @@ public class Main {
         // TODO: process
         // TODO: write standard Output
         // TODO: System.out.flush()
-        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
-//        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
+//        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
+        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
         System.out.flush();
     }
 }

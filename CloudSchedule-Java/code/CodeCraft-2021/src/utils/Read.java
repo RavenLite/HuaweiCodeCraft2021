@@ -87,8 +87,8 @@ public class Read {
 
     public void test(ArrayList<ServerType> server_type_list, ArrayList<VmType> vm_type_list,
                      ArrayList<DailyQueue> daily_queue_list) {
-        System.out.println(server_type_list.size());
-        System.out.println(vm_type_list.size());
-        System.out.println(daily_queue_list.size());
+//        System.out.println(server_type_list.size());
+//        System.out.println(vm_type_list.size());
+//        System.out.println(daily_queue_list.size());
     }
 }
