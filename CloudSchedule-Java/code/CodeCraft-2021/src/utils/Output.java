@@ -17,7 +17,7 @@ public class Output {
                              DailyQueue daily_queue_list) {
 
         // 输出购买
-        System.out.printf("(purchase, %d)%n", purchase_server_num);
+        System.out.printf("(purchase, %d)%n", purchase_server_list.size());
         for (Map.Entry<String, Integer> entry : purchase_server_list.entrySet()) {
             System.out.printf("(%s, %d)%n", entry.getKey(), entry.getValue());
         }

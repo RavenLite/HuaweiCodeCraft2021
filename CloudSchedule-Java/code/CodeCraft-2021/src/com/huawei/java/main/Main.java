@@ -20,7 +20,7 @@ public class Main {
     public static TrainingData get_training_data() {
         try {
             // 构建文件读取器
-            BufferedReader in = new BufferedReader(new FileReader("./training_data/training-1.txt"));
+            BufferedReader in = new BufferedReader(new FileReader("../training_data/training-1.txt"));
 
             // 读取 server_type_num 及 server_type_list
             int server_type_num = Integer.parseInt(in.readLine());
@@ -123,7 +123,8 @@ public class Main {
         // TODO: process
         // TODO: write standard Output
         // TODO: System.out.flush()
-//        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
-        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
+        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
+//        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
+        System.out.flush();
     }
 }
