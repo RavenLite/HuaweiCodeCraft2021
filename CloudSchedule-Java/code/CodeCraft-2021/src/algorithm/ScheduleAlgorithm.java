@@ -6,8 +6,6 @@ import utils.MultipleReturn;
 import utils.Output;
 import utils.OutputFile;
 
-import javax.print.attribute.standard.Severity;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -140,7 +138,23 @@ public class ScheduleAlgorithm {
     // 评价算法
     // TODO: 复杂化
     private float calculateServerEvaluation(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost) {
-        float serverEvaluation = ratioServerCpuNumLeft * 10 + ratioServerMemoryNumLeft * 10 + ratioDensityGap * 10 + ratioHardwareCost / 20000 + ratioRunningCost / 50;
+        float serverEvaluation =
+                constant.WEIGHT_SERVER_CPU_NUM_LEFT * ratioServerCpuNumLeft * 10
+                        + constant.WEIGHT_SERVER_MEMORY_NUM_LEFT * ratioServerMemoryNumLeft * 10
+                        + constant.WEIGHT_DENSITY_GAP * ratioDensityGap * 10
+                        + constant.WEIGHT_HARDWARE_COST * ratioHardwareCost / 20000
+                        + constant.WEIGHT_RUNNING_COST *  ratioRunningCost / 50;
+        return serverEvaluation;
+    }
+
+    // 迁移的评价算法
+    private float calculateServerEvaluationForMigration(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost) {
+        float serverEvaluation =
+                constant.WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION * ratioServerCpuNumLeft * 10
+                        + constant.WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION * ratioServerMemoryNumLeft * 10
+                        + constant.WEIGHT_DENSITY_GAP_MIGRATION * ratioDensityGap * 10
+                        + constant.WEIGHT_HARDWARE_COST_MIGRATION * ratioHardwareCost / 20000
+                        + constant.WEIGHT_RUNNING_COST_MIGRATION *  ratioRunningCost / 50;
         return serverEvaluation;
     }
 
@@ -239,7 +253,6 @@ public class ScheduleAlgorithm {
         this.updateVmServerId(oldNewServerIdMap);
 
         // 提交请使用此行
-//        System.out.println(this.dailyMigrationList.size());
 //        Output.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
         // 测试请使用此行
         OutputFile.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
@@ -363,7 +376,7 @@ public class ScheduleAlgorithm {
                 float ratioRunningCost = (float) server.getServerType().getServerTypeRunningCost();
 
                 // 评价结果
-                float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
+                float serverEvaluation = this.calculateServerEvaluationForMigration(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
 
                 if (serverEvaluation < tempBestServerEvaluation) {
                     tempBestServerEvaluation = serverEvaluation;

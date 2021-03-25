@@ -19,7 +19,6 @@ public class Main {
         // TODO: process
         // TODO: write standard Output
         // TODO: System.out.flush()
-//        new ScheduleAlgorithm(get_training_data(), new ResourcePool()).processPeriodQueue();
 
         // 提交时请使用此行，同时请调整 ScheduleAlgorithm.java 的输出部分
 //        new ScheduleAlgorithm(new Read().read(), new ResourcePool()).processPeriodQueue();
