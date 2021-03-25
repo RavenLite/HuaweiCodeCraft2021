@@ -317,10 +317,16 @@ public class ScheduleAlgorithm {
 
     private void migrateVm() {
         int vmCount = this.resourcePool.getVmMap().size();
+        System.out.println(vmCount);
         int maxMigrationNum = 5 * vmCount / 1000;
         int migrationNum = 0;
 
         for (int vmId : this.resourcePool.getVmMap().keySet()) {
+            // 超过最大迁移数量，直接退出
+            if (migrationNum >= maxMigrationNum) {
+                return;
+            }
+
             Vm vm = this.resourcePool.getVmMap().get(vmId);
             int originServerId = vm.getServerId();
             Server originServer = new Server();
@@ -375,12 +381,6 @@ public class ScheduleAlgorithm {
                 this.resourcePool.getVmServerMap().put(vmId, tempBestServer.getServerId());
                 migrationNum++;
                 this.dailyMigrationList.add(new MigrationItem(vmId, tempBestServer.getServerId(), tempBestDeployNode));
-            }
-
-
-            // 超过最大迁移数量，直接退出
-            if (migrationNum >= maxMigrationNum) {
-                return;
             }
         }
     }
