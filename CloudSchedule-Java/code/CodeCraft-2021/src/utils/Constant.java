@@ -26,18 +26,18 @@ public class Constant {
     public int SERVER_ID_NEW_START = -2;
 
     // weight for add
-    public float WEIGHT_SERVER_CPU_NUM_LEFT = 0;
-    public float WEIGHT_SERVER_MEMORY_NUM_LEFT = 0;
-    public float WEIGHT_DENSITY_GAP = 0;
-    public float WEIGHT_HARDWARE_COST = 0;
-    public float WEIGHT_RUNNING_COST = 0;
+    public float WEIGHT_SERVER_CPU_NUM_LEFT = 1.0f;
+    public float WEIGHT_SERVER_MEMORY_NUM_LEFT = 1.0f;
+    public float WEIGHT_DENSITY_GAP = 1.0f;
+    public float WEIGHT_HARDWARE_COST = 1.0f;
+    public float WEIGHT_RUNNING_COST = 1.0f;
 
     // weight for migration
-    public float WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION = 0;
-    public float WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION = 0;
-    public float WEIGHT_DENSITY_GAP_MIGRATION = 0;
-    public float WEIGHT_HARDWARE_COST_MIGRATION = 0;
-    public float WEIGHT_RUNNING_COST_MIGRATION = 0;
+    public float WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION = 1.0f;
+    public float WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION = 1.0f;
+    public float WEIGHT_DENSITY_GAP_MIGRATION = 1.0f;
+    public float WEIGHT_HARDWARE_COST_MIGRATION = 1.0f;
+    public float WEIGHT_RUNNING_COST_MIGRATION = 1.0f;
 
     // switch
     public boolean NEED_MIGRATION = true;
