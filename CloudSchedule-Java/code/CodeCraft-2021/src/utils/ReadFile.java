@@ -16,7 +16,7 @@ public class ReadFile {
     public TrainingData get_training_data() {
         try {
             // 构建文件读取器
-            BufferedReader in = new BufferedReader(new FileReader("./CloudSchedule/training_data/training-1.txt"));
+            BufferedReader in = new BufferedReader(new FileReader("./CloudSchedule/training_data/training-2.txt"));
 
             // 读取 server_type_num 及 server_type_list
             int server_type_num = Integer.parseInt(in.readLine());

@@ -4,7 +4,9 @@ import pojo.*;
 import utils.Constant;
 import utils.MultipleReturn;
 import utils.Output;
+import utils.OutputFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -232,7 +234,11 @@ public class ScheduleAlgorithm {
         // 分配服务器ID
         HashMap<Integer, Integer> oldNewServerIdMap = this.arrangeServerId(typeCountMap);
         this.updateVmServerId(oldNewServerIdMap);
-        Output.output_daily(this.dailyNewServerCount, typeCountMap, 0, new HashMap<>(), dailyQueue);
+
+        // 提交请使用此行
+        Output.output_daily(typeCountMap.size(), typeCountMap, 0, new HashMap<>(), dailyQueue);
+        // 测试请使用此行
+//        OutputFile.output_daily(typeCountMap.size(), typeCountMap, 0, new HashMap<>(), dailyQueue);
     }
 
     // 分配服务器ID
