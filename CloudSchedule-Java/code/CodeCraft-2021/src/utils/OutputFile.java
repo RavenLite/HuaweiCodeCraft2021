@@ -38,7 +38,7 @@ public class OutputFile {
             }
 
             // 输出迁移
-            System.out.printf("%d, %d\n", migrate_vm_num, dailyMigrationList.size());
+//            System.out.printf("%d, %d\n", migrate_vm_num, dailyMigrationList.size());
             out.write(String.format("(migration, %d)%n", migrate_vm_num));
             for (MigrationItem migrationItem : dailyMigrationList) {
                 if (migrationItem.getDeploymentNode().equals(constant.VM_NODE_AB)){

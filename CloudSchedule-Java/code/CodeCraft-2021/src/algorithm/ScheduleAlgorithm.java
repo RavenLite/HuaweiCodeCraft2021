@@ -317,7 +317,6 @@ public class ScheduleAlgorithm {
 
     private void migrateVm() {
         int vmCount = this.resourcePool.getVmMap().size();
-        System.out.println(vmCount);
         int maxMigrationNum = 5 * vmCount / 1000;
         int migrationNum = 0;
 
