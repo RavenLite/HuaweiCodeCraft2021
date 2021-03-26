@@ -3,54 +3,44 @@ package algorithm;
 import pojo.*;
 import utils.Constant;
 import utils.MultipleReturn;
+import utils.Output;
 import utils.OutputFile;
-import utils.TestFile;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class ScheduleAlgorithm {
     private TrainingData trainingData;
     private ResourcePool resourcePool;
-
-    private int dailyNewServerCount;
     private static Constant constant = new Constant();
-    private int total_days;
 
-    private float WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION = 0.0f;
-    private float WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION = 0.0f;
-    private float WEIGHT_DENSITY_GAP_MIGRATION = 0.0f;
-    private float WEIGHT_HARDWARE_COST_MIGRATION = 0.0f;
-    private float WEIGHT_RUNNING_COST_MIGRATION = 0.0f;
-
-    private String output_file_name;
+    // 每天新购买的服务器数量
+    private int dailyNewServerCount;
 
     // 记录了当天购买了新服务器的虚拟机 ID
     private ArrayList<Integer> dailyVmIdOnNewServer = new ArrayList<>();
+    // 记录了当天的迁移项
     private ArrayList<MigrationItem> dailyMigrationList = new ArrayList<>();
 
-    public ScheduleAlgorithm(TrainingData trainingData, ResourcePool resourcePool,
-                             float a, float b, float c, float d, float e, String ofn) {
+    // 成本最大最小值
+    private int maxHardwareCost;
+    private int minHardwareCost;
+    private int maxRunningCost;
+
+    // 当前天数
+    private int todayNum = 0;
+
+    public ScheduleAlgorithm(TrainingData trainingData, ResourcePool resourcePool) {
         this.trainingData = trainingData;
         this.resourcePool = resourcePool;
-        this.WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION = a;
-        this.WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION = b;
-        this.WEIGHT_DENSITY_GAP_MIGRATION = c;
-        this.WEIGHT_HARDWARE_COST_MIGRATION = d;
-        this.WEIGHT_RUNNING_COST_MIGRATION = e;
-        this.output_file_name = ofn;
 
         this.dailyNewServerCount = 0;
-        this.total_days = this.trainingData.getDailyQueueNum();
     }
 
     // 处理周期的请求队列
     public void processPeriodQueue() {
         this.beforeProcessPeriodQueue();
-
-        AtomicInteger day = new AtomicInteger(1);
 
         this.trainingData.getDailyQueueList().forEach(
                 dailyQueue -> {
@@ -58,34 +48,33 @@ public class ScheduleAlgorithm {
 //                    String str = String.format("Running: %d/%d, ServerCount: %d, DailyQueueSize: %d", this.trainingData.getDailyQueueList().indexOf(dailyQueue) + 1, this.trainingData.getDailyQueueNum(), this.resourcePool.getServerList().size(), dailyQueue.getQueueItemList().size());
 //                    System.out.println(str);
 
-                    this.processDailyQueue(dailyQueue, day.get());
-                    day.addAndGet(1);
+                    this.processDailyQueue(dailyQueue);
                 }
         );
     }
 
     // 处理当天的请求队列
-    private void processDailyQueue(DailyQueue dailyQueue, int day) {
+    private void processDailyQueue(DailyQueue dailyQueue) {
         this.beforeProcessDailyQueue();
 
         dailyQueue.getQueueItemList().forEach(
-                queueItem -> {this.processQueueItem(queueItem, day);}
+                this::processQueueItem
         );
 
         this.afterProcessDailyQueue(dailyQueue);
     }
 
     // 处理当天的每一条请求
-    private void processQueueItem(QueueItem queueItem, int day) {
+    private void processQueueItem(QueueItem queueItem) {
         if (constant.ACTION_ADD.equals(queueItem.getQueueItemAction())) {
-            this.processQueueItemAdd(queueItem, day);
+            this.processQueueItemAdd(queueItem);
         } else {
             this.processQueueItemDel(queueItem);
         }
     }
 
     // 处理添加请求
-    private void processQueueItemAdd(QueueItem queueItem, int day) {
+    private void processQueueItemAdd(QueueItem queueItem) {
         VmType queueItemVmType = queueItem.getQueueItemVmType();
         Vm createdVm = this.resourcePool.createVm(queueItem.getQueueItemVmId(), queueItem.getQueueItemVmType());
         queueItem.setQueueVm(createdVm);
@@ -114,9 +103,7 @@ public class ScheduleAlgorithm {
             float ratioRunningCost = (float) server.getServerType().getServerTypeRunningCost();
 
             // 评价结果
-//            float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost, day);
-            float serverEvaluation = this.calculateServerEvaluationOutput(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost, day);
-
+            float serverEvaluation = this.calculateServerEvaluation(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost, server.getServerId());
 
             if (serverEvaluation < tempBestServerEvaluation) {
                 tempBestServerEvaluation = serverEvaluation;
@@ -160,47 +147,39 @@ public class ScheduleAlgorithm {
 
     // 评价算法
     // TODO: 复杂化
-    private float calculateServerEvaluation(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost, int day) {
-        int remainDay = this.total_days - day;
-        float serverEvaluation =
-                constant.WEIGHT_SERVER_CPU_NUM_LEFT * ratioServerCpuNumLeft * 10
-                        + constant.WEIGHT_SERVER_MEMORY_NUM_LEFT * ratioServerMemoryNumLeft * 10
-                        + constant.WEIGHT_DENSITY_GAP * ratioDensityGap * 10
-                        + constant.WEIGHT_HARDWARE_COST * ratioHardwareCost / 20000
-                        + constant.WEIGHT_RUNNING_COST *  ratioRunningCost * remainDay / 20000;
-        return serverEvaluation;
-    }
+    private float calculateServerEvaluation(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost, int serverId) {
+//        float serverEvaluation =
+//                constant.WEIGHT_SERVER_CPU_NUM_LEFT * ratioServerCpuNumLeft * 10
+//                        + constant.WEIGHT_SERVER_MEMORY_NUM_LEFT * ratioServerMemoryNumLeft * 10
+//                        + constant.WEIGHT_DENSITY_GAP * ratioDensityGap * 10
+//                        + constant.WEIGHT_HARDWARE_COST * ratioHardwareCost / 20000
+//                        + constant.WEIGHT_RUNNING_COST *  ratioRunningCost / 50;
 
-    private float calculateServerEvaluationOutput(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost, int day) {
-        int remainDay = this.total_days - day;
+        float ratioServerCost;
+        if (serverId == -1) {
+            ratioServerCost = ((ratioHardwareCost - this.minHardwareCost) / (this.maxHardwareCost - this.minHardwareCost) + ratioRunningCost / this.maxRunningCost) / 2;
+        } else {
+            ratioServerCost = ratioRunningCost / this.maxRunningCost;
+        }
+
         float serverEvaluation =
-                WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION * ratioServerCpuNumLeft * 10
-                        + WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION * ratioServerMemoryNumLeft * 10
-                        + WEIGHT_DENSITY_GAP_MIGRATION * ratioDensityGap * 10
-                        + WEIGHT_HARDWARE_COST_MIGRATION * ratioHardwareCost / 20000
-                        + WEIGHT_RUNNING_COST_MIGRATION *  ratioRunningCost * remainDay / 20000;
+                constant.WEIGHT_SERVER_SPACE_LEFT * ((ratioServerCpuNumLeft + ratioServerMemoryNumLeft) / 2) + constant.WEIGHT_SERVER_DENSITY_GAP * ratioDensityGap + constant.WEIGHT_SERVER_COST * ratioServerCost;
         return serverEvaluation;
     }
 
     // 迁移的评价算法
     private float calculateServerEvaluationForMigration(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost) {
-        float serverEvaluation =
-                constant.WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION * ratioServerCpuNumLeft * 10
-                        + constant.WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION * ratioServerMemoryNumLeft * 10
-                        + constant.WEIGHT_DENSITY_GAP_MIGRATION * ratioDensityGap * 10
-                        + constant.WEIGHT_HARDWARE_COST_MIGRATION * ratioHardwareCost / 20000
-                        + constant.WEIGHT_RUNNING_COST_MIGRATION *  ratioRunningCost / 50;
-        return serverEvaluation;
-    }
+//        float serverEvaluation =
+//                constant.WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION * ratioServerCpuNumLeft * 10
+//                        + constant.WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION * ratioServerMemoryNumLeft * 10
+//                        + constant.WEIGHT_DENSITY_GAP_MIGRATION * ratioDensityGap * 10
+//                        + constant.WEIGHT_HARDWARE_COST_MIGRATION * ratioHardwareCost / 20000
+//                        + constant.WEIGHT_RUNNING_COST_MIGRATION *  ratioRunningCost / 50;
 
-    private float calculateServerEvaluationForMigrationOutput(float ratioServerCpuNumLeft, float ratioServerMemoryNumLeft, float ratioDensityGap, float ratioHardwareCost, float ratioRunningCost) {
+        float ratioServerCost;
+        ratioServerCost = ratioRunningCost / this.maxRunningCost;
 
-        float serverEvaluation =
-                WEIGHT_SERVER_CPU_NUM_LEFT_MIGRATION * ratioServerCpuNumLeft * 10
-                        + WEIGHT_SERVER_MEMORY_NUM_LEFT_MIGRATION * ratioServerMemoryNumLeft * 10
-                        + WEIGHT_DENSITY_GAP_MIGRATION * ratioDensityGap * 10
-                        + WEIGHT_HARDWARE_COST_MIGRATION * ratioHardwareCost / 20000
-                        + WEIGHT_RUNNING_COST_MIGRATION *  ratioRunningCost / 50;
+        float serverEvaluation = constant.WEIGHT_SERVER_SPACE_LEFT_MIGRATION * ((ratioServerCpuNumLeft + ratioServerMemoryNumLeft) / 2) + constant.WEIGHT_SERVER_DENSITY_GAP_MIGRATION * ratioDensityGap + constant.WEIGHT_SERVER_COST_MIGRATION * ratioServerCost;
         return serverEvaluation;
     }
 
@@ -271,7 +250,6 @@ public class ScheduleAlgorithm {
         this.resourcePool.freeVm(queueItem.getQueueItemVmId());
     }
 
-
     // 处理周期的请求队列的前置操作
     private void beforeProcessPeriodQueue() {
         this.trainingData.getServerTypeList().forEach(
@@ -280,6 +258,28 @@ public class ScheduleAlgorithm {
                     this.resourcePool.buyServer(server);
                 }
         );
+
+        int tempMaxHardwareCost = 0;
+        int tempMinHardwareCost = (int)constant.MIN_VALUE_INITIAL;
+        int tempMaxRunningCost = 0;
+
+        for (ServerType serverType : this.trainingData.getServerTypeList()) {
+            if (tempMaxHardwareCost < serverType.getServerTypeHardwareCost()) {
+                tempMaxHardwareCost = serverType.getServerTypeHardwareCost();
+            }
+
+            if (tempMinHardwareCost > serverType.getServerTypeHardwareCost()) {
+                tempMinHardwareCost = serverType.getServerTypeHardwareCost();
+            }
+
+            if (tempMaxRunningCost < serverType.getServerTypeRunningCost()) {
+                tempMaxRunningCost = serverType.getServerTypeRunningCost();
+            }
+        }
+
+        this.maxHardwareCost = tempMaxHardwareCost;
+        this.minHardwareCost = tempMinHardwareCost;
+        this.maxRunningCost = tempMaxRunningCost;
     }
 
     // 处理当天的请求队列的前置操作
@@ -289,6 +289,7 @@ public class ScheduleAlgorithm {
         }
         this.dailyNewServerCount = 0;
         this.dailyVmIdOnNewServer.clear();
+        this.todayNum++;
     }
 
     // 处理当天的请求队列的后置操作
@@ -303,7 +304,7 @@ public class ScheduleAlgorithm {
         // 提交请使用此行
 //        Output.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
         // 测试请使用此行
-        OutputFile.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue, output_file_name);
+        OutputFile.output_daily(typeCountMap.size(), typeCountMap, this.dailyMigrationList.size(), this.dailyMigrationList, dailyQueue);
         this.dailyMigrationList.clear();
     }
 
@@ -424,9 +425,7 @@ public class ScheduleAlgorithm {
                 float ratioRunningCost = (float) server.getServerType().getServerTypeRunningCost();
 
                 // 评价结果
-//                float serverEvaluation = this.calculateServerEvaluationForMigration(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
-                float serverEvaluation = this.calculateServerEvaluationForMigrationOutput(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
-
+                float serverEvaluation = this.calculateServerEvaluationForMigration(ratioServerCpuNumLeft, ratioServerMemoryNumLeft, ratioDensityGap, ratioHardwareCost, ratioRunningCost);
 
                 if (serverEvaluation < tempBestServerEvaluation) {
                     tempBestServerEvaluation = serverEvaluation;

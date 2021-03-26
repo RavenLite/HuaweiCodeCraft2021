@@ -9,17 +9,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ReadFile {
-
-    public String file_name = "./training_data/training-1.txt";
     /**
      * 获取 training_data
      * @return training_data
      */
-    public TrainingData get_training_data(String fn) {
-        file_name = fn;
-        try {1
+    public TrainingData get_training_data() {
+        try {
             // 构建文件读取器
-            BufferedReader in = new BufferedReader(new FileReader(file_name));
+            BufferedReader in = new BufferedReader(new FileReader("../training_data/training-1.txt"));
 
             // 读取 server_type_num 及 server_type_list
             int server_type_num = Integer.parseInt(in.readLine());

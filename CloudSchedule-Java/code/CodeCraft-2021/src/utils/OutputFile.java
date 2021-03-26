@@ -15,15 +15,12 @@ public class OutputFile {
     private static final Constant constant = new Constant();
 //    private static int day = 0;
 
-    public static String file_name = "output.txt";
-
     public static void output_daily(int purchase_server_type_num, HashMap<String, Integer> purchase_server_list,
                              int migrate_vm_num, ArrayList<MigrationItem> dailyMigrationList,
-                             DailyQueue daily_queue_list, String fn) {
+                             DailyQueue daily_queue_list) {
 
-        file_name = fn;
         try {
-            File file = new File(file_name);
+            File file = new File("output.txt");
             FileOutputStream fos;
             if (!file.exists()) {
                 file.createNewFile();
